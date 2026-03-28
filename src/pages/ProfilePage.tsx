@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { RoutePath } from '../App'
-import type { Copy } from '../i18n'
+import type { Copy, Locale } from '../i18n'
+import ProjectCard from '../components/ProjectCard'
 import CreateProjectModal from '../modals/CreateProjectModal'
-import { getProjects, logout } from '../services/api'
+import { getProjects, logout, createProject } from '../services/api'
 
 type ProfilePageProps = {
   onNavigate: (path: RoutePath) => void
   copy: Copy
+  locale: Locale
   topControls: ReactNode
-  onCreateProject: (projectName: string) => void
 }
 
-function ProfilePage({ onNavigate, copy, onCreateProject }: ProfilePageProps) {
+function ProfilePage({ onNavigate, copy, locale, topControls }: ProfilePageProps) {
   const [projects, setProjects] = useState<any[]>([])
   const [userName, setUserName] = useState<string>('Founder')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -54,6 +55,7 @@ function ProfilePage({ onNavigate, copy, onCreateProject }: ProfilePageProps) {
           <h1 className="profile-title">{copy.profile.helloUser(userName)}</h1>
         </div>
         <div className="profile-actions">
+          {topControls}
           <button type="button" className="secondary-button" onClick={async () => {
             await logout()
             onNavigate('/')
@@ -77,10 +79,13 @@ function ProfilePage({ onNavigate, copy, onCreateProject }: ProfilePageProps) {
         {hasProjects ? (
           <div className="project-list">
             {projects.map((project) => (
-              <article key={project.id} className="project-card">
-                <h3>{project.name}</h3>
-                <p>{project.context?.company_summary || 'Sin descripción'}</p>
-              </article>
+              <ProjectCard
+                key={project.id}
+                project={project}
+                copy={copy}
+                locale={locale}
+                onOpen={(projectId) => onNavigate(`/project/${projectId}`)}
+              />
             ))}
           </div>
         ) : (
@@ -100,9 +105,14 @@ function ProfilePage({ onNavigate, copy, onCreateProject }: ProfilePageProps) {
         <CreateProjectModal
           copy={copy}
           onClose={() => setIsModalOpen(false)}
-          onCreateProject={(projectName) => {
+          onCreateProject={async (projectName) => {
             setIsModalOpen(false)
-            onCreateProject(projectName)
+            try {
+              const created = await createProject(projectName)
+              onNavigate(`/project/${created.id}`)
+            } catch (err: any) {
+              alert(err.message)
+            }
           }}
         />
       ) : null}

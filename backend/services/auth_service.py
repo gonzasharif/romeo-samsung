@@ -40,13 +40,13 @@ def get_project_or_404(project_id: str) -> Project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
     proj_data = proj_resp.data[0]
     
-    tm_resp = supabase.table("target_models").select("*").eq("project_id", project_id).execute()
-    ag_resp = supabase.table("agents").select("*").eq("project_id", project_id).execute()
-    sim_resp = supabase.table("simulations").select("*").eq("project_id", project_id).execute()
+    #tm_resp = supabase.table("target_models").select("*").eq("project_id", project_id).execute()
+    #ag_resp = supabase.table("agent_profiles").select("*").eq("project_id", project_id).execute()
+    #sim_resp = supabase.table("simulations").select("*").eq("project_id", project_id).execute()
     
-    proj_data["target_models"] = tm_resp.data
-    proj_data["agents"] = ag_resp.data
-    proj_data["simulations"] = sim_resp.data
+    #proj_data["target_models"] = tm_resp.data
+    #proj_data["agents"] = ag_resp.data
+    #proj_data["simulations"] = sim_resp.data
     
     return Project(**proj_data)
 

@@ -119,6 +119,7 @@ export const messages = {
       projectsKicker: 'Tus proyectos',
       projectsTitle: 'Espacio de simulación',
       projectsCount: (count: number) => `${count} proyectos`,
+      projectCreatedAt: 'Creado',
       emptyText: 'Creá uno nuevo para empezar a validar ideas con focus groups de IA.',
     },
     project: {
@@ -136,6 +137,12 @@ export const messages = {
       projectNamePlaceholder: 'Ej. App de viandas saludables',
       create: 'Create',
       closeModal: 'Cerrar modal',
+      saving: 'Guardando...',
+      save: 'Guardar',
+      edit: 'Editar',
+      companySummaryLabel: 'Resumen de la empresa',
+      productDescriptionLabel: 'Descripción del producto',
+      targetAudienceLabel: 'Audiencia objetivo',
     },
   },
   en: {
@@ -256,6 +263,7 @@ export const messages = {
       projectsKicker: 'Your projects',
       projectsTitle: 'Simulation space',
       projectsCount: (count: number) => `${count} projects`,
+      projectCreatedAt: 'Created',
       emptyText: 'Create one to start validating ideas with AI focus groups.',
     },
     project: {
@@ -273,6 +281,12 @@ export const messages = {
       projectNamePlaceholder: 'Ex. Healthy meal subscription app',
       create: 'Create',
       closeModal: 'Close modal',
+      saving: 'Saving...',
+      save: 'Save',
+      edit: 'Edit',
+      companySummaryLabel: 'Company summary',
+      productDescriptionLabel: 'Product description',
+      targetAudienceLabel: 'Target audience',
     },
   },
 } as const
