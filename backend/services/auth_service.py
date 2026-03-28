@@ -1,22 +1,43 @@
 from fastapi import Header, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from models.db import USERS, PROJECTS
 from models.domain import User, Project
 from utils.supabase_client import supabase
+import json
 
 security = HTTPBearer()
 
 def get_user_or_404(user_id: str) -> User:
-    user = USERS.get(user_id)
-    if not user:
+    response = supabase.table("users").select("*").eq("id", user_id).execute()
+    if not response.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return user
+    data = response.data[0]
+    
+    try:
+        if isinstance(data.get("company"), str):
+            company_data = json.loads(data["company"])
+        else:
+            company_data = data.get("company") or {}
+    except json.JSONDecodeError:
+        company_data = {"name": data.get("company")}
+
+    data["company"] = company_data
+    return User(**data)
 
 def get_project_or_404(project_id: str) -> Project:
-    project = PROJECTS.get(project_id)
-    if not project:
+    proj_resp = supabase.table("projects").select("*").eq("id", project_id).execute()
+    if not proj_resp.data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    return project
+    proj_data = proj_resp.data[0]
+    
+    tm_resp = supabase.table("target_models").select("*").eq("project_id", project_id).execute()
+    ag_resp = supabase.table("agents").select("*").eq("project_id", project_id).execute()
+    sim_resp = supabase.table("simulations").select("*").eq("project_id", project_id).execute()
+    
+    proj_data["target_models"] = tm_resp.data
+    proj_data["agents"] = ag_resp.data
+    proj_data["simulations"] = sim_resp.data
+    
+    return Project(**proj_data)
 
 def get_authenticated_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     token = credentials.credentials
@@ -26,13 +47,7 @@ def get_authenticated_user(credentials: HTTPAuthorizationCredentials = Depends(s
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         
         user_id = user_response.user.id
-        # Normally we'd fetch from DB. Since it's still mocked in memory:
-        # We need to make sure the user exists or at least mock it
-        user = USERS.get(user_id)
-        if not user:
-            # For this MVP, if it exists in auth but not memory, we can create a mock or return 404
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found in memory DB")
-        return user
+        return get_user_or_404(user_id)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 

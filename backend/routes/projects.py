@@ -1,39 +1,57 @@
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Response, HTTPException
 from models.domain import Project, AgentProfile, TargetModel, SimulationRun, StatsResponse, User
-from models.db import PROJECTS
 from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, TargetModelCreate, SimulationCreate
 from utils.common import now_utc, new_id
 from services.auth_service import get_authenticated_user, get_project_or_404, assert_project_owner
 from services.project_service import generate_defaults, default_stats
+from utils.supabase_client import supabase
 
 router = APIRouter()
 
 @router.get("/projects", response_model=list[Project])
 def list_projects(user: User = Depends(get_authenticated_user)) -> list[Project]:
-    return [project for project in PROJECTS.values() if project.owner_id == user.id]
+    proj_resp = supabase.table("projects").select("*").eq("owner_id", user.id).execute()
+    projects_list = []
+    
+    for pdata in proj_resp.data:
+        pid = pdata["id"]
+        tm_resp = supabase.table("target_models").select("*").eq("project_id", pid).execute()
+        ag_resp = supabase.table("agents").select("*").eq("project_id", pid).execute()
+        sim_resp = supabase.table("simulations").select("*").eq("project_id", pid).execute()
+        
+        pdata["target_models"] = tm_resp.data
+        pdata["agents"] = ag_resp.data
+        pdata["simulations"] = sim_resp.data
+        projects_list.append(Project(**pdata))
+        
+    return projects_list
 
 @router.post("/projects", response_model=Project, status_code=status.HTTP_201_CREATED)
 def create_project(
     payload: ProjectCreate,
     user: User = Depends(get_authenticated_user),
 ) -> Project:
-    timestamp = now_utc()
+    timestamp = now_utc().isoformat()
     project_id = new_id("proj")
     target_models, agents = generate_defaults(payload.context, project_id)
     
-    project = Project(
-        id=project_id,
-        owner_id=user.id,
-        name=payload.name,
-        context=payload.context,
-        target_models=target_models,
-        agents=agents,
-        stats=default_stats(),
-        created_at=timestamp,
-        updated_at=timestamp,
-    )
-    PROJECTS[project.id] = project
-    return project
+    p_data = {
+        "id": project_id,
+        "owner_id": user.id,
+        "name": payload.name,
+        "context": payload.context.model_dump(),
+        "stats": default_stats().model_dump(),
+        "created_at": timestamp,
+        "updated_at": timestamp,
+    }
+    supabase.table("projects").insert(p_data).execute()
+    
+    if target_models:
+        supabase.table("target_models").insert([m.model_dump() for m in target_models]).execute()
+    if agents:
+        supabase.table("agents").insert([a.model_dump() for a in agents]).execute()
+        
+    return get_project_or_404(project_id)
 
 @router.get("/projects/{project_id}", response_model=Project)
 def get_project(project_id: str, user: User = Depends(get_authenticated_user)) -> Project:
@@ -49,11 +67,13 @@ def update_project(
 ) -> Project:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    updated = project.model_copy(
-        update=payload.model_dump(exclude_unset=True) | {"updated_at": now_utc()}
-    )
-    PROJECTS[project_id] = updated
-    return updated
+    
+    update_data = {"updated_at": now_utc().isoformat()}
+    if payload.name: update_data["name"] = payload.name
+    if payload.context: update_data["context"] = payload.context.model_dump()
+    
+    supabase.table("projects").update(update_data).eq("id", project_id).execute()
+    return get_project_or_404(project_id)
 
 @router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_project(
@@ -62,142 +82,108 @@ def delete_project(
 ) -> Response:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    PROJECTS.pop(project_id, None)
+    
+    supabase.table("simulations").delete().eq("project_id", project_id).execute()
+    supabase.table("agents").delete().eq("project_id", project_id).execute()
+    supabase.table("target_models").delete().eq("project_id", project_id).execute()
+    supabase.table("projects").delete().eq("id", project_id).execute()
+    
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
 
 # --- Target Models Sub-resources ---
 
 @router.get("/projects/{project_id}/models", response_model=list[TargetModel])
-def list_project_models(
-    project_id: str,
-    user: User = Depends(get_authenticated_user),
-) -> list[TargetModel]:
+def list_project_models(project_id: str, user: User = Depends(get_authenticated_user)) -> list[TargetModel]:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    return project.target_models
+    resp = supabase.table("target_models").select("*").eq("project_id", project_id).execute()
+    return [TargetModel(**row) for row in resp.data]
 
-@router.post(
-    "/projects/{project_id}/models",
-    response_model=TargetModel,
-    status_code=status.HTTP_201_CREATED,
-)
-def add_project_model(
-    project_id: str,
-    payload: TargetModelCreate,
-    user: User = Depends(get_authenticated_user),
-) -> TargetModel:
+@router.post("/projects/{project_id}/models", response_model=TargetModel, status_code=status.HTTP_201_CREATED)
+def add_project_model(project_id: str, payload: TargetModelCreate, user: User = Depends(get_authenticated_user)) -> TargetModel:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    target_model = TargetModel(id=new_id("model"), project_id=project_id, **payload.model_dump())
-    project.target_models.append(target_model)
-    project.updated_at = now_utc()
-    return target_model
-
+    
+    tmodel_data = {
+         "id": new_id("model"),
+         "project_id": project_id,
+         **payload.model_dump()
+    }
+    resp = supabase.table("target_models").insert(tmodel_data).execute()
+    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
+    return TargetModel(**resp.data[0])
 
 # --- Agents Sub-resources ---
 
 @router.get("/projects/{project_id}/agents", response_model=list[AgentProfile])
-def list_project_agents(
-    project_id: str,
-    user: User = Depends(get_authenticated_user),
-) -> list[AgentProfile]:
+def list_project_agents(project_id: str, user: User = Depends(get_authenticated_user)) -> list[AgentProfile]:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    return project.agents
+    resp = supabase.table("agents").select("*").eq("project_id", project_id).execute()
+    return [AgentProfile(**row) for row in resp.data]
 
-@router.post(
-    "/projects/{project_id}/agents",
-    response_model=AgentProfile,
-    status_code=status.HTTP_201_CREATED,
-)
-def add_project_agent(
-    project_id: str,
-    payload: AgentCreate,
-    user: User = Depends(get_authenticated_user),
-) -> AgentProfile:
+@router.post("/projects/{project_id}/agents", response_model=AgentProfile, status_code=status.HTTP_201_CREATED)
+def add_project_agent(project_id: str, payload: AgentCreate, user: User = Depends(get_authenticated_user)) -> AgentProfile:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    # verify model exists
-    if not any(m.id == payload.model_id for m in project.target_models):
-        from fastapi import HTTPException
+    
+    tm_resp = supabase.table("target_models").select("id").eq("id", payload.model_id).eq("project_id", project_id).execute()
+    if not tm_resp.data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="model_id no fue encontrado en este proyecto")
         
-    agent = AgentProfile(id=new_id("agent"), **payload.model_dump())
-    project.agents.append(agent)
-    project.updated_at = now_utc()
-    return agent
-
+    agent_data = {
+         "id": new_id("agent"),
+         "project_id": project_id,
+         **payload.model_dump()
+    }
+    resp = supabase.table("agents").insert(agent_data).execute()
+    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
+    return AgentProfile(**resp.data[0])
 
 # --- Stats Sub-resources ---
 
 @router.get("/projects/{project_id}/stats", response_model=StatsResponse)
-def get_project_stats(
-    project_id: str,
-    user: User = Depends(get_authenticated_user),
-) -> StatsResponse:
+def get_project_stats(project_id: str, user: User = Depends(get_authenticated_user)) -> StatsResponse:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     return project.stats
 
-
 # --- Simulations Sub-resources ---
 
 @router.get("/projects/{project_id}/simulations", response_model=list[SimulationRun])
-def list_simulations(
-    project_id: str,
-    user: User = Depends(get_authenticated_user),
-) -> list[SimulationRun]:
+def list_simulations(project_id: str, user: User = Depends(get_authenticated_user)) -> list[SimulationRun]:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    return project.simulations
+    resp = supabase.table("simulations").select("*").eq("project_id", project_id).execute()
+    return [SimulationRun(**row) for row in resp.data]
 
-@router.post(
-    "/projects/{project_id}/simulations",
-    response_model=SimulationRun,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-def create_simulation(
-    project_id: str,
-    payload: SimulationCreate,
-    user: User = Depends(get_authenticated_user),
-) -> SimulationRun:
+@router.post("/projects/{project_id}/simulations", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
+def create_simulation(project_id: str, payload: SimulationCreate, user: User = Depends(get_authenticated_user)) -> SimulationRun:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
+    
+    timestamp = now_utc().isoformat()
+    run_data = {
+        "id": new_id("run"),
+        "project_id": project_id,
+        "scenario_name": payload.scenario_name,
+        "provider": payload.provider,
+        "status": 2,
+        "questions": payload.questions,
+        "overrides": payload.overrides,
+        "agents_snapshot": [m.model_dump() for m in project.agents],
+        "started_at": timestamp,
+        "completed_at": timestamp,
+        "summary": "Simulación mockeada en supabase."
+    }
+    resp = supabase.table("simulations").insert(run_data).execute()
+    supabase.table("projects").update({"updated_at": timestamp}).eq("id", project_id).execute()
+    return SimulationRun(**resp.data[0])
 
-    started_at = now_utc()
-    run = SimulationRun(
-        id=new_id("run"),
-        project_id=project.id,
-        scenario_name=payload.scenario_name,
-        provider=payload.provider,
-        status=2,
-        questions=payload.questions,
-        overrides=payload.overrides,
-        agents_snapshot=[agent.model_copy(deep=True) for agent in project.agents],
-        started_at=started_at,
-        completed_at=now_utc(),
-        summary=(
-            "Simulación creada. En una integración real, este endpoint dispararía "
-            "la ejecución contra OpenAI, Gemini o Claude."
-        ),
-    )
-    project.simulations.append(run)
-    project.updated_at = now_utc()
-    return run
-
-# Aliases
 @router.post("/projects/{project_id}/runs", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
-def create_run_alias(
-    project_id: str,
-    payload: SimulationCreate,
-    user: User = Depends(get_authenticated_user),
-) -> SimulationRun:
+def create_run_alias(project_id: str, payload: SimulationCreate, user: User = Depends(get_authenticated_user)) -> SimulationRun:
     return create_simulation(project_id, payload, user=user)
 
 @router.get("/projects/{project_id}/runs", response_model=list[SimulationRun])
-def list_runs_alias(
-    project_id: str,
-    user: User = Depends(get_authenticated_user),
-) -> list[SimulationRun]:
+def list_runs_alias(project_id: str, user: User = Depends(get_authenticated_user)) -> list[SimulationRun]:
     return list_simulations(project_id, user=user)
