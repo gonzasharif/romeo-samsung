@@ -4,7 +4,8 @@ import type { RoutePath } from '../App'
 import type { Copy, Locale } from '../i18n'
 import ProjectCard from '../components/ProjectCard'
 import CreateProjectModal from '../modals/CreateProjectModal'
-import { getProjects, logout, createProject } from '../services/api'
+import DeleteProjectModal from '../modals/DeleteProjectModal'
+import { getProjects, logout, createProject, deleteProject } from '../services/api'
 
 type ProfilePageProps = {
   onNavigate: (path: RoutePath) => void
@@ -17,6 +18,7 @@ function ProfilePage({ onNavigate, copy, locale }: ProfilePageProps) {
   const [projects, setProjects] = useState<any[]>([])
   const [userName, setUserName] = useState<string>('Founder')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null)
   
   useEffect(() => {
     const sessionStr = localStorage.getItem('session')
@@ -84,6 +86,9 @@ function ProfilePage({ onNavigate, copy, locale }: ProfilePageProps) {
                 copy={copy}
                 locale={locale}
                 onOpen={(projectId) => onNavigate(`/project/${projectId}`)}
+                onDelete={(selectedProject) =>
+                  setProjectToDelete({ id: selectedProject.id, name: selectedProject.name })
+                }
               />
             ))}
           </div>
@@ -109,6 +114,25 @@ function ProfilePage({ onNavigate, copy, locale }: ProfilePageProps) {
             try {
               const created = await createProject(projectName)
               onNavigate(`/project/${created.id}`)
+            } catch (err: any) {
+              alert(err.message)
+            }
+          }}
+        />
+      ) : null}
+
+      {projectToDelete ? (
+        <DeleteProjectModal
+          copy={copy}
+          projectName={projectToDelete.name}
+          onClose={() => setProjectToDelete(null)}
+          onConfirm={async () => {
+            try {
+              await deleteProject(projectToDelete.id)
+              setProjects((currentProjects) =>
+                currentProjects.filter((project) => project.id !== projectToDelete.id),
+              )
+              setProjectToDelete(null)
             } catch (err: any) {
               alert(err.message)
             }

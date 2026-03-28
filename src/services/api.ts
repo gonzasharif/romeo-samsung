@@ -133,6 +133,25 @@ export async function updateProject(projectId: string, payload: any) {
   return await res.json()
 }
 
+export async function deleteProject(projectId: string) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`
+    }
+  })
+
+  if (res.status === 401) throw new Error('Unauthorized')
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}))
+    throw new Error(parseErrorDetail(error.detail, 'Falla al eliminar proyecto'))
+  }
+}
+
 export async function logout() {
   const sessionStr = localStorage.getItem('session')
   if (sessionStr) {
