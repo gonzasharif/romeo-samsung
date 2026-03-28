@@ -155,6 +155,22 @@ Una vez que termine de descargar las imágenes y levantar los contenedores, tus 
 
 Para detener la ejecución, presiona `Ctrl+C`. Para borrar los contenedores puedes usar `docker-compose down`.
 
+### Configuración del servidor de modelos LLM (api_llm)
+
+El contenedor del backend asume por defecto que el modelo LLM está corriendo en tu máquina (host) en el puerto `8000`. Si tu API de LLM corre en otra IP u otro puerto, puedes configurar la variable `LLM_API_URL` antes de usar el Compose:
+
+**Opción 1: En línea de comandos (Linux / Mac / Git Bash)**
+```bash
+LLM_API_URL="http://192.168.1.100:9000" docker compose up --build
+```
+
+**Opción 2: Usar un archivo `.env` local**
+Crea un archivo llamado `.env` en la raíz del proyecto (junto a `docker-compose.yml`) y añade:
+```env
+LLM_API_URL=http://tu_ip_aqui:tu_puerto
+```
+Docker Compose tomará automáticamente esta URL al levantar el backend.
+
 ## Cómo correr el frontend (Manualmente)
 
 ### Requisitos

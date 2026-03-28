@@ -2,9 +2,9 @@ import os
 import httpx
 from fastapi import HTTPException
 
-# URL base de la api_llm. Puede configurarse por variables de entorno.
-# El valor por defecto asume que corre en el mismo host o es accesible por docker
-LLM_API_URL = os.getenv("LLM_API_URL", "http://127.0.0.1:8001")
+# URL base de la api_llm.
+# Se inyecta desde docker-compose.yml, apuntando al host donde corra el otro contenedor o máquina.
+LLM_API_URL = os.getenv("LLM_API_URL", "http://host.docker.internal:8000")
 
 async def get_models():
     """Obtiene la lista de modelos disponibles llamando a la api_llm."""
