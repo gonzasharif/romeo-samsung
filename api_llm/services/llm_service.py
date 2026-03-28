@@ -8,9 +8,21 @@ _active_models: Dict[str, Dict[str, Any]] = {}
 
 def get_models() -> list:
     model_dir = "models"
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir, exist_ok=True)
-    return [f for f in os.listdir(model_dir) if os.path.isfile(os.path.join(model_dir, f))]
+    valid_extensions = (".gguf", ".bin")
+
+    os.makedirs(model_dir, exist_ok=True)
+
+    models = []
+    for f in os.listdir(model_dir):
+        path = os.path.join(model_dir, f)
+        if (
+            os.path.isfile(path)
+            and not f.startswith(".")
+            and f.lower().endswith(valid_extensions)
+        ):
+            models.append(f)
+
+    return models
 
 def start_model(model_name: str, agent_context: str, n_gpu_layers: int = -1, n_ctx: int = 4096) -> str:
     path = os.path.join("models", model_name)

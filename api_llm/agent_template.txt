@@ -104,10 +104,6 @@ Responder en JSON con esta estructura EXACTA:
     "nivel": "",
     "interpretacion": ""
   },
-  "recuerdo": {
-    "nivel": "",
-    "descripcion": ""
-  },
   "caracteristica_destacable": "",
   "caracteristica_repudiable": ""
 }
