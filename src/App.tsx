@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
+import ProjectPage from './pages/ProjectPage'
 import ProfilePage from './pages/ProfilePage'
 import SignupPage from './pages/SignupPage'
 import { messages } from './i18n'
@@ -8,11 +9,12 @@ import type { Locale } from './i18n'
 import type { Copy } from './i18n'
 import './App.css'
 
-export type RoutePath = '/' | '/login' | '/signup' | '/profile'
+export type RoutePath = '/' | '/login' | '/signup' | '/profile' | '/project'
 type ThemeMode = 'light' | 'dark'
 
 function normalizePath(pathname: string): RoutePath {
   if (pathname === '/login') return '/login'
+  if (pathname === '/project') return '/project'
   if (pathname === '/profile') return '/profile'
   if (pathname === '/signup') return '/signup'
   return '/'
@@ -40,6 +42,7 @@ function App() {
   const [route, setRoute] = useState<RoutePath>(() => normalizePath(window.location.pathname))
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme)
   const [locale, setLocale] = useState<Locale>(getInitialLocale)
+  const [activeProjectName, setActiveProjectName] = useState<string>('New Project')
 
   useEffect(() => {
     const onPopState = () => setRoute(normalizePath(window.location.pathname))
@@ -81,7 +84,7 @@ function App() {
   if (route === '/login') {
     return (
       <main className="landing-shell auth-shell">
-        <LoginPage onNavigate={navigate} copy={copy} topControls={topControls} />
+        <LoginPage onNavigate={navigate} copy={copy} />
       </main>
     )
   }
@@ -89,7 +92,7 @@ function App() {
   if (route === '/signup') {
     return (
       <main className="landing-shell auth-shell">
-        <SignupPage onNavigate={navigate} copy={copy} topControls={topControls} />
+        <SignupPage onNavigate={navigate} copy={copy} />
       </main>
     )
   }
@@ -97,7 +100,28 @@ function App() {
   if (route === '/profile') {
     return (
       <main className="landing-shell profile-shell-wrapper">
-        <ProfilePage onNavigate={navigate} copy={copy} topControls={topControls} />
+        <ProfilePage
+          onNavigate={navigate}
+          copy={copy}
+          topControls={topControls}
+          onCreateProject={(projectName) => {
+            setActiveProjectName(projectName)
+            navigate('/project')
+          }}
+        />
+      </main>
+    )
+  }
+
+  if (route === '/project') {
+    return (
+      <main className="landing-shell profile-shell-wrapper">
+        <ProjectPage
+          onNavigate={navigate}
+          copy={copy}
+          topControls={topControls}
+          projectName={activeProjectName}
+        />
       </main>
     )
   }

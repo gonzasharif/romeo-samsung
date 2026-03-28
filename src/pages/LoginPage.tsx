@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import AuthLayout from './AuthLayout'
 import type { RoutePath } from '../App'
 import type { Copy } from '../i18n'
@@ -6,11 +7,12 @@ import { login } from '../services/api'
 type LoginPageProps = {
   onNavigate: (path: RoutePath) => void
   copy: Copy
+  topControls: ReactNode
 }
 
 function LoginPage({ onNavigate, copy }: LoginPageProps) {
   return (
-    <AuthLayout mode="login" onNavigate={onNavigate} copy={copy}>
+    <AuthLayout mode="login" onNavigate={onNavigate} copy={copy} topControls={null}>
       <form
         className="auth-form"
         onSubmit={async (event) => {

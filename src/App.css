@@ -162,13 +162,15 @@ html[data-theme='dark'] .signal-card,
 html[data-theme='dark'] .workflow-card,
 html[data-theme='dark'] .insight-card,
 html[data-theme='dark'] .profile-panel,
+html[data-theme='dark'] .project-panel,
 html[data-theme='dark'] .project-card,
 html[data-theme='dark'] .empty-projects,
 html[data-theme='dark'] .auth-panel-inner,
 html[data-theme='dark'] .auth-visual,
 html[data-theme='dark'] .floating-card,
 html[data-theme='dark'] .persona-card,
-html[data-theme='dark'] .cta-section {
+html[data-theme='dark'] .cta-section,
+html[data-theme='dark'] .project-modal {
   background:
     linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(17, 24, 39, 0.78)),
     rgba(15, 23, 42, 0.72);
@@ -657,6 +659,47 @@ html[data-theme='dark'] .empty-projects {
   backdrop-filter: blur(24px);
 }
 
+.project-shell {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.project-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.project-title {
+  margin-top: 0.9rem;
+  font-size: clamp(2.6rem, 5vw, 4.4rem);
+}
+
+.project-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.project-panel {
+  max-width: 56rem;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border-radius: 2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 239, 0.72)),
+    rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 26px 70px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+}
+
+.project-panel h2 {
+  margin-bottom: 0.85rem;
+}
+
 .profile-panel-header {
   display: flex;
   align-items: flex-start;
@@ -742,6 +785,67 @@ html[data-theme='dark'] .empty-projects {
 
 .empty-illustration span:nth-child(3) {
   inset: 2rem 0.8rem 0.8rem 2rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.32);
+  backdrop-filter: blur(8px);
+}
+
+.project-modal {
+  position: relative;
+  width: min(100%, 31rem);
+  padding: 1.5rem;
+  border-radius: 2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 248, 239, 0.82)),
+    rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 28px 80px rgba(15, 23, 42, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+}
+
+.project-modal .section-tag {
+  margin-bottom: 1rem;
+}
+
+.project-modal h2 {
+  margin-bottom: 0.7rem;
+}
+
+.modal-copy {
+  margin-bottom: 1.2rem;
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid rgba(23, 37, 84, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 180ms ease;
+}
+
+.modal-close:hover {
+  transform: translateY(-1px);
 }
 
 .auth-layout {
@@ -1092,11 +1196,13 @@ html[data-theme='dark'] .empty-projects {
   }
 
   .profile-topbar,
-  .profile-panel-header {
+  .profile-panel-header,
+  .project-topbar {
     flex-direction: column;
   }
 
-  .profile-actions {
+  .profile-actions,
+  .project-actions {
     width: 100%;
     flex-wrap: wrap;
   }
@@ -1178,6 +1284,8 @@ html[data-theme='dark'] .empty-projects {
   .auth-panel-inner,
   .auth-visual,
   .profile-panel,
+  .project-panel,
+  .project-modal,
   .empty-projects {
     border-radius: 1.4rem;
   }

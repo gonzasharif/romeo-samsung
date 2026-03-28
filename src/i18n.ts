@@ -121,6 +121,22 @@ export const messages = {
       projectsCount: (count: number) => `${count} proyectos`,
       emptyText: 'Creá uno nuevo para empezar a validar ideas con focus groups de IA.',
     },
+    project: {
+      tag: 'Proyecto',
+      backToProfile: 'Volver al workspace',
+      kicker: 'Primer paso',
+      heading: 'Tu proyecto ya está listo para configurarse',
+      description:
+        'Este espacio va a concentrar el contexto del producto, los perfiles de agentes y las corridas del focus group IA.',
+      modalTag: 'Nuevo proyecto',
+      modalTitle: 'Creá un proyecto nuevo',
+      modalDescription:
+        'Elegí un nombre claro para identificar esta idea antes de cargar el resto del contexto.',
+      projectNameLabel: 'Nombre del proyecto',
+      projectNamePlaceholder: 'Ej. App de viandas saludables',
+      create: 'Create',
+      closeModal: 'Cerrar modal',
+    },
   },
   en: {
     common: {
@@ -241,6 +257,22 @@ export const messages = {
       projectsTitle: 'Simulation space',
       projectsCount: (count: number) => `${count} projects`,
       emptyText: 'Create one to start validating ideas with AI focus groups.',
+    },
+    project: {
+      tag: 'Project',
+      backToProfile: 'Back to workspace',
+      kicker: 'First step',
+      heading: 'Your project is ready to be configured',
+      description:
+        'This space will hold the product context, AI agent profiles, and focus group simulation runs.',
+      modalTag: 'New project',
+      modalTitle: 'Create a new project',
+      modalDescription:
+        'Choose a clear name so you can identify this idea before loading the rest of the context.',
+      projectNameLabel: 'Project name',
+      projectNamePlaceholder: 'Ex. Healthy meal subscription app',
+      create: 'Create',
+      closeModal: 'Close modal',
     },
   },
 } as const

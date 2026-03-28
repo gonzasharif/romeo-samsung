@@ -2,17 +2,20 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { RoutePath } from '../App'
 import type { Copy } from '../i18n'
+import CreateProjectModal from '../modals/CreateProjectModal'
 import { getProjects, logout } from '../services/api'
 
 type ProfilePageProps = {
   onNavigate: (path: RoutePath) => void
   copy: Copy
   topControls: ReactNode
+  onCreateProject: (projectName: string) => void
 }
 
-function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
+function ProfilePage({ onNavigate, copy, onCreateProject }: ProfilePageProps) {
   const [projects, setProjects] = useState<any[]>([])
   const [userName, setUserName] = useState<string>('Founder')
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
   useEffect(() => {
     const sessionStr = localStorage.getItem('session')
@@ -51,7 +54,6 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
           <h1 className="profile-title">{copy.profile.helloUser(userName)}</h1>
         </div>
         <div className="profile-actions">
-        
           <button type="button" className="secondary-button" onClick={async () => {
             await logout()
             onNavigate('/')
@@ -67,7 +69,7 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
             <p className="panel-kicker">{copy.profile.projectsKicker}</p>
             <h2>{copy.profile.projectsTitle}</h2>
           </div>
-          <button type="button" className="primary-cta profile-cta" onClick={() => alert('Pronto: Flujo para crear proyecto')}>
+          <button type="button" className="primary-cta profile-cta" onClick={() => setIsModalOpen(true)}>
             {copy.common.createProject}
           </button>
         </div>
@@ -93,6 +95,17 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
           </div>
         )}
       </section>
+
+      {isModalOpen ? (
+        <CreateProjectModal
+          copy={copy}
+          onClose={() => setIsModalOpen(false)}
+          onCreateProject={(projectName) => {
+            setIsModalOpen(false)
+            onCreateProject(projectName)
+          }}
+        />
+      ) : null}
     </section>
   )
 }
