@@ -150,6 +150,7 @@ export const messages = {
       companySummaryLabel: 'Resumen de la empresa',
       productDescriptionLabel: 'Descripción del producto',
       targetAudienceLabel: 'Audiencia objetivo',
+      loadingProjectInfo: 'Cargando información del proyecto...',
     },
   },
   en: {
@@ -301,6 +302,7 @@ export const messages = {
       companySummaryLabel: 'Company summary',
       productDescriptionLabel: 'Product description',
       targetAudienceLabel: 'Target audience',
+      loadingProjectInfo: 'Loading project information...',
     },
   },
 } as const
