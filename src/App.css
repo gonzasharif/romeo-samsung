@@ -1,6 +1,10 @@
 .landing-shell {
   position: relative;
   overflow: clip;
+  padding-bottom: 2rem;
+  background:
+    radial-gradient(circle at 18% 86%, rgba(52, 211, 153, 0.12), transparent 24%),
+    radial-gradient(circle at 86% 100%, rgba(124, 92, 255, 0.14), transparent 28%);
 }
 
 .topbar {
@@ -69,10 +73,10 @@
 }
 
 .landing-shell::after {
-  width: 24rem;
-  height: 24rem;
-  left: -9rem;
-  top: 18rem;
+  width: 30rem;
+  height: 30rem;
+  left: -8rem;
+  bottom: -14rem;
   background:
     radial-gradient(circle, rgba(52, 211, 153, 0.22) 0%, rgba(52, 211, 153, 0) 72%);
 }
@@ -414,13 +418,27 @@
   gap: 1.5rem;
   align-items: center;
   justify-content: space-between;
-  margin: 1rem clamp(1.25rem, 4vw, 3rem) 2rem;
+  position: relative;
+  margin: 1rem clamp(1.25rem, 4vw, 3rem) 0;
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;
   border-radius: 2rem;
   background: linear-gradient(135deg, rgba(255, 243, 228, 0.95), rgba(238, 246, 255, 0.92));
   border: 1px solid rgba(23, 37, 84, 0.08);
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+}
+
+.cta-section::after {
+  content: '';
+  position: absolute;
+  left: 1.5rem;
+  right: 1.5rem;
+  bottom: -1rem;
+  height: 5rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 122, 89, 0.12) 0%, rgba(255, 122, 89, 0) 72%);
+  filter: blur(16px);
+  z-index: -1;
 }
 
 .cta-section p {
