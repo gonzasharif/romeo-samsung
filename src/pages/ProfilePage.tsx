@@ -58,9 +58,6 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
           }}>
             {copy.common.logout}
           </button>
-          <button type="button" className="primary-cta profile-cta" onClick={() => alert('Pronto: Flujo para crear proyecto')}>
-            {copy.common.createProject}
-          </button>
         </div>
       </header>
 
@@ -70,9 +67,9 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
             <p className="panel-kicker">{copy.profile.projectsKicker}</p>
             <h2>{copy.profile.projectsTitle}</h2>
           </div>
-          <span className="project-count">
-            {hasProjects ? copy.profile.projectsCount(projects.length) : copy.common.noProjects}
-          </span>
+          <button type="button" className="primary-cta profile-cta" onClick={() => alert('Pronto: Flujo para crear proyecto')}>
+            {copy.common.createProject}
+          </button>
         </div>
 
         {hasProjects ? (
