@@ -95,9 +95,6 @@ function ProjectPage({ projectId, onNavigate, copy }: ProjectPageProps) {
             <p className="panel-kicker">{copy.project.formTag}</p>
             <h2>{copy.project.formTitle}</h2>
           </div>
-          <button type="button" className="primary-cta" onClick={() => void handleSave()} disabled={isSaving}>
-            {isSaving ? copy.project.saving : copy.project.save}
-          </button>
         </div>
 
         <div className="project-form">
@@ -185,6 +182,17 @@ function ProjectPage({ projectId, onNavigate, copy }: ProjectPageProps) {
                 <option value="male">{copy.project.male}</option>
               </select>
             </label>
+          </div>
+
+          <div className="project-form-footer">
+            <button
+              type="button"
+              className="primary-cta"
+              onClick={() => void handleSave()}
+              disabled={isSaving}
+            >
+              {isSaving ? copy.project.saving : copy.project.generateUserPersonas}
+            </button>
           </div>
         </div>
       </section>

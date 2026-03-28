@@ -720,6 +720,12 @@ html[data-theme='dark'] .empty-projects {
   margin-top: 1.5rem;
 }
 
+.project-form-footer {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.75rem;
+}
+
 .project-form-grid {
   align-items: start;
 }
