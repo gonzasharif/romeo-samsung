@@ -61,8 +61,8 @@ function App() {
   const navigate = (path: RoutePath) => {
     if (path === route) return
     window.history.pushState({}, '', path)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
     setRoute(path)
+    window.scrollTo({ top: 0, behavior: 'auto' })
   }
 
   const toggleTheme = () => {

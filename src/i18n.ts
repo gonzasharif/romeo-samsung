@@ -147,10 +147,10 @@ export const messages = {
         `Se va a eliminar "${projectName}" de tu workspace y de la base de datos.`,
       cancelDelete: 'Cancelar',
       confirmDelete: 'Eliminar proyecto',
+      loadingProjectInfo: 'Cargando información del proyecto...',
       companySummaryLabel: 'Resumen de la empresa',
       productDescriptionLabel: 'Descripción del producto',
       targetAudienceLabel: 'Audiencia objetivo',
-      loadingProjectInfo: 'Cargando información del proyecto...',
     },
   },
   en: {
@@ -299,10 +299,10 @@ export const messages = {
         `This will remove "${projectName}" from your workspace and from the database.`,
       cancelDelete: 'Cancel',
       confirmDelete: 'Delete project',
+      loadingProjectInfo: 'Loading project information...',
       companySummaryLabel: 'Company summary',
       productDescriptionLabel: 'Product description',
       targetAudienceLabel: 'Target audience',
-      loadingProjectInfo: 'Loading project information...',
     },
   },
 } as const

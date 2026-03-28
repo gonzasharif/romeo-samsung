@@ -58,7 +58,7 @@ function ProjectPage({ projectId, onNavigate, copy }: ProjectPageProps) {
     return (
       <section className="project-shell">
         <header className="project-topbar">
-          <p>{project.loadingProjectInfo}</p>
+          <p>{copy.project.loadingProjectInfo}</p>
         </header>
       </section>
     )
