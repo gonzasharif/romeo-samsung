@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status, Response, HTTPException
 from models.domain import Project, AgentProfile, TargetModel, SimulationRun, StatsResponse, User
-from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, TargetModelCreate, SimulationCreate
+from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, TargetModelCreate, SimulationCreate, TargetModelUpdate, AgentUpdate
 from utils.common import now_utc, new_id
 from services.auth_service import get_authenticated_user, get_project_or_404, assert_project_owner
 from services.project_service import generate_defaults, default_stats
@@ -113,6 +113,35 @@ def add_project_model(project_id: str, payload: TargetModelCreate, user: User = 
     supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
     return TargetModel(**resp.data[0])
 
+@router.put("/projects/{project_id}/models/{model_id}", response_model=TargetModel)
+def update_project_model(project_id: str, model_id: str, payload: TargetModelUpdate, user: User = Depends(get_authenticated_user)) -> TargetModel:
+    project = get_project_or_404(project_id)
+    assert_project_owner(project, user)
+    
+    update_data = payload.model_dump(exclude_unset=True)
+    if not update_data:
+        resp = supabase.table("target_models").select("*").eq("id", model_id).eq("project_id", project_id).execute()
+        if not resp.data: raise HTTPException(status_code=404, detail="Model not found")
+        return TargetModel(**resp.data[0])
+        
+    resp = supabase.table("target_models").update(update_data).eq("id", model_id).eq("project_id", project_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Model not found")
+        
+    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
+    return TargetModel(**resp.data[0])
+
+@router.delete("/projects/{project_id}/models/{model_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_project_model(project_id: str, model_id: str, user: User = Depends(get_authenticated_user)) -> Response:
+    project = get_project_or_404(project_id)
+    assert_project_owner(project, user)
+    
+    supabase.table("agents").delete().eq("model_id", model_id).eq("project_id", project_id).execute()
+    supabase.table("target_models").delete().eq("id", model_id).eq("project_id", project_id).execute()
+    
+    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 # --- Agents Sub-resources ---
 
 @router.get("/projects/{project_id}/agents", response_model=list[AgentProfile])
@@ -139,6 +168,38 @@ def add_project_agent(project_id: str, payload: AgentCreate, user: User = Depend
     resp = supabase.table("agents").insert(agent_data).execute()
     supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
     return AgentProfile(**resp.data[0])
+
+@router.put("/projects/{project_id}/agents/{agent_id}", response_model=AgentProfile)
+def update_project_agent(project_id: str, agent_id: str, payload: AgentUpdate, user: User = Depends(get_authenticated_user)) -> AgentProfile:
+    project = get_project_or_404(project_id)
+    assert_project_owner(project, user)
+    
+    update_data = payload.model_dump(exclude_unset=True)
+    if "model_id" in update_data:
+        tm_resp = supabase.table("target_models").select("id").eq("id", payload.model_id).eq("project_id", project_id).execute()
+        if not tm_resp.data:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="model_id no fue encontrado en este proyecto")
+            
+    if not update_data:
+        resp = supabase.table("agents").select("*").eq("id", agent_id).eq("project_id", project_id).execute()
+        if not resp.data: raise HTTPException(status_code=404, detail="Agent not found")
+        return AgentProfile(**resp.data[0])
+        
+    resp = supabase.table("agents").update(update_data).eq("id", agent_id).eq("project_id", project_id).execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Agent not found")
+        
+    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
+    return AgentProfile(**resp.data[0])
+
+@router.delete("/projects/{project_id}/agents/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_project_agent(project_id: str, agent_id: str, user: User = Depends(get_authenticated_user)) -> Response:
+    project = get_project_or_404(project_id)
+    assert_project_owner(project, user)
+    
+    supabase.table("agents").delete().eq("id", agent_id).eq("project_id", project_id).execute()
+    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # --- Stats Sub-resources ---
 

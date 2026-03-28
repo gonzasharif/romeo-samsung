@@ -41,6 +41,22 @@ class AgentCreate(BaseModel):
     motivations: list[str] = Field(default_factory=list)
     objections: list[str] = Field(default_factory=list)
 
+class TargetModelUpdate(BaseModel):
+    name: str | None = None
+    age_range: str | None = None
+    income_level: Literal[0, 1, 2] | None = None
+    geography: str | None = None
+    tech_savviness: Literal[0, 1, 2] | None = None
+    attitude: Literal[0, 1, 2, 3] | None = None
+
+class AgentUpdate(BaseModel):
+    model_id: str | None = None
+    name: str | None = None
+    gender: str | None = None
+    segment: str | None = None
+    motivations: list[str] | None = None
+    objections: list[str] | None = None
+
 class SimulationCreate(BaseModel):
     scenario_name: str
     questions: list[str] = Field(default_factory=list)
