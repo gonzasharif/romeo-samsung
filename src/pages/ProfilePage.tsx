@@ -13,7 +13,7 @@ type ProfilePageProps = {
   topControls: ReactNode
 }
 
-function ProfilePage({ onNavigate, copy, locale, topControls }: ProfilePageProps) {
+function ProfilePage({ onNavigate, copy, locale }: ProfilePageProps) {
   const [projects, setProjects] = useState<any[]>([])
   const [userName, setUserName] = useState<string>('Founder')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -55,7 +55,6 @@ function ProfilePage({ onNavigate, copy, locale, topControls }: ProfilePageProps
           <h1 className="profile-title">{copy.profile.helloUser(userName)}</h1>
         </div>
         <div className="profile-actions">
-          {topControls}
           <button type="button" className="secondary-button" onClick={async () => {
             await logout()
             onNavigate('/')

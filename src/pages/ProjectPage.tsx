@@ -11,7 +11,7 @@ type ProjectPageProps = {
   topControls: ReactNode
 }
 
-function ProjectPage({ projectId, onNavigate, copy, topControls }: ProjectPageProps) {
+function ProjectPage({ projectId, onNavigate, copy }: ProjectPageProps) {
   const [project, setProject] = useState<any>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState<any>({})
@@ -72,7 +72,6 @@ function ProjectPage({ projectId, onNavigate, copy, topControls }: ProjectPagePr
           <h1 className="project-title">{project.name}</h1>
         </div>
         <div className="project-actions">
-          {topControls}
           <button type="button" className="secondary-button" onClick={() => onNavigate('/profile')}>
             {copy.project.backToProfile}
           </button>

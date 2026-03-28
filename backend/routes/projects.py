@@ -12,18 +12,10 @@ router = APIRouter()
 def list_projects(user: User = Depends(get_authenticated_user)) -> list[Project]:
     proj_resp = supabase.table("projects").select("*").eq("owner_id", user.id).execute()
     projects_list = []
-    
-    #for pdata in proj_resp.data:
-        #pid = pdata["id"]
-        #tm_resp = supabase.table("target_models").select("*").eq("project_id", pid).execute()
-        #ag_resp = supabase.table("agent_profiles").select("*").eq("project_id", pid).execute()
-        #sim_resp = supabase.table("simulations").select("*").eq("project_id", pid).execute()
-        
-        #pdata["target_models"] = tm_resp.data
-        #pdata["agents"] = ag_resp.data
-        #pdata["simulations"] = sim_resp.data
-        #projects_list.append(Project(**pdata))
-        
+
+    for pdata in proj_resp.data or []:
+        projects_list.append(Project(**pdata))
+
     return projects_list
 
 @router.post("/projects", response_model=Project, status_code=status.HTTP_201_CREATED)

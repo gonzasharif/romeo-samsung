@@ -58,7 +58,10 @@ export async function getProjects() {
   }
   
   const data = await res.json()
-  return data
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.projects)) return data.projects
+  if (Array.isArray(data?.items)) return data.items
+  return []
 }
 
 export async function createProject(name: string) {
