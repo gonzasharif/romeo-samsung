@@ -21,16 +21,21 @@ class ProjectUpdate(BaseModel):
     name: str | None = None
     context: ProjectContext | None = None
 
-class AgentCreate(BaseModel):
+class TargetModelCreate(BaseModel):
     name: str
     age_range: str | None = None
+    income_level: Literal[0, 1, 2] | None = None
+    geography: str | None = None
+    tech_savviness: Literal[0, 1, 2] | None = None
+    attitude: Literal[0, 1, 2, 3] | None = None
+
+class AgentCreate(BaseModel):
+    model_id: str
+    name: str
+    gender: str | None = None
     segment: str
     motivations: list[str] = Field(default_factory=list)
     objections: list[str] = Field(default_factory=list)
-    attitude: Literal[0, 1, 2, 3] | None = None
-    tech_savviness: Literal[0, 1, 2] | None = None
-    income_level: Literal[0, 1, 2] | None = None
-    geography: str | None = None
 
 class SimulationCreate(BaseModel):
     scenario_name: str

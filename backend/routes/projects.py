@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, status, Response
-from models.domain import Project, AgentProfile, SimulationRun, StatsResponse, User
+from models.domain import Project, AgentProfile, TargetModel, SimulationRun, StatsResponse, User
 from models.db import PROJECTS
-from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, SimulationCreate
+from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, TargetModelCreate, SimulationCreate
 from utils.common import now_utc, new_id
 from services.auth_service import get_authenticated_user, get_project_or_404, assert_project_owner
-from services.project_service import default_agents, default_stats
+from services.project_service import generate_defaults, default_stats
 
 router = APIRouter()
 
@@ -18,12 +18,16 @@ def create_project(
     user: User = Depends(get_authenticated_user),
 ) -> Project:
     timestamp = now_utc()
+    project_id = new_id("proj")
+    target_models, agents = generate_defaults(payload.context, project_id)
+    
     project = Project(
-        id=new_id("proj"),
+        id=project_id,
         owner_id=user.id,
         name=payload.name,
         context=payload.context,
-        models=default_agents(payload.context),
+        target_models=target_models,
+        agents=agents,
         stats=default_stats(),
         created_at=timestamp,
         updated_at=timestamp,
@@ -62,31 +66,65 @@ def delete_project(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-# --- Models Sub-resources ---
+# --- Target Models Sub-resources ---
 
-@router.get("/projects/{project_id}/models", response_model=list[AgentProfile])
+@router.get("/projects/{project_id}/models", response_model=list[TargetModel])
 def list_project_models(
+    project_id: str,
+    user: User = Depends(get_authenticated_user),
+) -> list[TargetModel]:
+    project = get_project_or_404(project_id)
+    assert_project_owner(project, user)
+    return project.target_models
+
+@router.post(
+    "/projects/{project_id}/models",
+    response_model=TargetModel,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_project_model(
+    project_id: str,
+    payload: TargetModelCreate,
+    user: User = Depends(get_authenticated_user),
+) -> TargetModel:
+    project = get_project_or_404(project_id)
+    assert_project_owner(project, user)
+    target_model = TargetModel(id=new_id("model"), project_id=project_id, **payload.model_dump())
+    project.target_models.append(target_model)
+    project.updated_at = now_utc()
+    return target_model
+
+
+# --- Agents Sub-resources ---
+
+@router.get("/projects/{project_id}/agents", response_model=list[AgentProfile])
+def list_project_agents(
     project_id: str,
     user: User = Depends(get_authenticated_user),
 ) -> list[AgentProfile]:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    return project.models
+    return project.agents
 
 @router.post(
-    "/projects/{project_id}/models",
+    "/projects/{project_id}/agents",
     response_model=AgentProfile,
     status_code=status.HTTP_201_CREATED,
 )
-def add_project_model(
+def add_project_agent(
     project_id: str,
     payload: AgentCreate,
     user: User = Depends(get_authenticated_user),
 ) -> AgentProfile:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    agent = AgentProfile(id=new_id("agent"), source="manual", **payload.model_dump())
-    project.models.append(agent)
+    # verify model exists
+    if not any(m.id == payload.model_id for m in project.target_models):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="model_id no fue encontrado en este proyecto")
+        
+    agent = AgentProfile(id=new_id("agent"), **payload.model_dump())
+    project.agents.append(agent)
     project.updated_at = now_utc()
     return agent
 
@@ -133,10 +171,10 @@ def create_simulation(
         project_id=project.id,
         scenario_name=payload.scenario_name,
         provider=payload.provider,
-        status="completed",
+        status=2,
         questions=payload.questions,
         overrides=payload.overrides,
-        models_snapshot=[model.model_copy(deep=True) for model in project.models],
+        agents_snapshot=[agent.model_copy(deep=True) for agent in project.agents],
         started_at=started_at,
         completed_at=now_utc(),
         summary=(

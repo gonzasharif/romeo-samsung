@@ -16,17 +16,24 @@ class User(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-class AgentProfile(BaseModel):
+class TargetModel(BaseModel):
     id: str
+    project_id: str
     name: str
     age_range: str | None = None
+    income_level: Literal[0, 1, 2] | None = None
+    geography: str | None = None
+    tech_savviness: Literal[0, 1, 2] | None = None
+    attitude: Literal[0, 1, 2, 3] | None = None
+
+class AgentProfile(BaseModel):
+    id: str
+    model_id: str
+    name: str
+    gender: str | None = None
     segment: str
     motivations: list[str] = Field(default_factory=list)
     objections: list[str] = Field(default_factory=list)
-    attitude: Literal[0, 1, 2, 3] | None = None
-    tech_savviness: Literal[0, 1, 2] | None = None
-    income_level: Literal[0, 1, 2] | None = None
-    geography: str | None = None
 
 class ProjectContext(BaseModel):
     company_summary: str
@@ -35,6 +42,7 @@ class ProjectContext(BaseModel):
     target_audience: str
     pricing_notes: str | None = None
     market_context: str | None = None
+    category: str | None = None
 
 class StatsResponse(BaseModel):
     demand_score: float = Field(ge=0, le=100)
@@ -51,7 +59,7 @@ class SimulationRun(BaseModel):
     status: Literal[0, 1, 2] # 0: queued, 1: running, 2: completed
     questions: list[str]
     overrides: dict[str, str | int | float | bool]
-    models_snapshot: list[AgentProfile]
+    agents_snapshot: list[AgentProfile]
     started_at: datetime
     completed_at: datetime | None = None
     summary: str | None = None
@@ -63,7 +71,8 @@ class Project(BaseModel):
     owner_id: str
     name: str
     context: ProjectContext
-    models: list[AgentProfile] = Field(default_factory=list)
+    target_models: list[TargetModel] = Field(default_factory=list)
+    agents: list[AgentProfile] = Field(default_factory=list)
     stats: StatsResponse
     simulations: list[SimulationRun] = Field(default_factory=list)
     created_at: datetime
