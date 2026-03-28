@@ -1,21 +1,24 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { RoutePath } from '../App'
-import type { Copy } from '../i18n'
+import type { Copy, Locale } from '../i18n'
+import ProjectCard from '../components/ProjectCard'
 import CreateProjectModal from '../modals/CreateProjectModal'
-import { getProjects, logout } from '../services/api'
+import DeleteProjectModal from '../modals/DeleteProjectModal'
+import { getProjects, logout, createProject, deleteProject } from '../services/api'
 
 type ProfilePageProps = {
   onNavigate: (path: RoutePath) => void
   copy: Copy
+  locale: Locale
   topControls: ReactNode
-  onCreateProject: (projectName: string) => void
 }
 
-function ProfilePage({ onNavigate, copy, onCreateProject }: ProfilePageProps) {
+function ProfilePage({ onNavigate, copy, locale }: ProfilePageProps) {
   const [projects, setProjects] = useState<any[]>([])
   const [userName, setUserName] = useState<string>('Founder')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null)
   
   useEffect(() => {
     const sessionStr = localStorage.getItem('session')
@@ -77,10 +80,16 @@ function ProfilePage({ onNavigate, copy, onCreateProject }: ProfilePageProps) {
         {hasProjects ? (
           <div className="project-list">
             {projects.map((project) => (
-              <article key={project.id} className="project-card">
-                <h3>{project.name}</h3>
-                <p>{project.context?.company_summary || 'Sin descripción'}</p>
-              </article>
+              <ProjectCard
+                key={project.id}
+                project={project}
+                copy={copy}
+                locale={locale}
+                onOpen={(projectId) => onNavigate(`/project/${projectId}`)}
+                onDelete={(selectedProject) =>
+                  setProjectToDelete({ id: selectedProject.id, name: selectedProject.name })
+                }
+              />
             ))}
           </div>
         ) : (
@@ -100,9 +109,33 @@ function ProfilePage({ onNavigate, copy, onCreateProject }: ProfilePageProps) {
         <CreateProjectModal
           copy={copy}
           onClose={() => setIsModalOpen(false)}
-          onCreateProject={(projectName) => {
+          onCreateProject={async (projectName) => {
             setIsModalOpen(false)
-            onCreateProject(projectName)
+            try {
+              const created = await createProject(projectName)
+              onNavigate(`/project/${created.id}`)
+            } catch (err: any) {
+              alert(err.message)
+            }
+          }}
+        />
+      ) : null}
+
+      {projectToDelete ? (
+        <DeleteProjectModal
+          copy={copy}
+          projectName={projectToDelete.name}
+          onClose={() => setProjectToDelete(null)}
+          onConfirm={async () => {
+            try {
+              await deleteProject(projectToDelete.id)
+              setProjects((currentProjects) =>
+                currentProjects.filter((project) => project.id !== projectToDelete.id),
+              )
+              setProjectToDelete(null)
+            } catch (err: any) {
+              alert(err.message)
+            }
           }}
         />
       ) : null}

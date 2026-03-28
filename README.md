@@ -131,7 +131,27 @@ X-User-Id: user_xxxxx
 
 No hay login real todavía. Primero se crea un usuario con `POST /users` y luego ese `id` se envía en el header para listar o crear proyectos.
 
-## Cómo correr el frontend
+## Cómo correr con Docker Compose (Recomendado)
+
+La forma más rápida de levantar ambos servicios (Frontend y Backend) en modo desarrollo con recarga activa (hot reload) es usando Docker Compose.
+
+### Requisitos
+- Docker Desktop (o Docker + Docker Compose) instalado.
+
+### Levantar el entorno
+En la terminal, dentro de la raíz del proyecto, ejecuta:
+```bash
+docker-compose up --build
+```
+
+Una vez que termine de descargar las imágenes y levantar los contenedores, tus servicios estarán disponibles en:
+- **Frontend (Sitio Web):** http://localhost:5173
+- **Backend API:** http://localhost:8000
+- **Documentación Interactiva (Swagger):** http://localhost:8000/docs
+
+Para detener la ejecución, presiona `Ctrl+C`. Para borrar los contenedores puedes usar `docker-compose down`.
+
+## Cómo correr el frontend (Manualmente)
 
 ### Requisitos
 
@@ -162,7 +182,7 @@ npm run build
 npm run preview
 ```
 
-## Cómo correr el backend
+## Cómo correr el backend (Manualmente)
 
 ### Requisitos
 
