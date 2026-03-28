@@ -34,7 +34,6 @@ class TargetModelCreate(BaseModel):
     attitude: Literal[0, 1, 2, 3] | None = None
 
 class AgentCreate(BaseModel):
-    model_id: str
     name: str
     gender: str | None = None
     segment: str

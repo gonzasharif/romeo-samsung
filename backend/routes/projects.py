@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, status, Response, HTTPException
 from models.domain import Project, AgentProfile, TargetModel, SimulationRun, StatsResponse, User
 from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, TargetModelCreate, SimulationCreate, TargetModelUpdate, AgentUpdate
-from utils.common import now_utc, new_id
+from utils.common import now_utc
 from services.auth_service import get_authenticated_user, get_project_or_404, assert_project_owner
-from services.project_service import generate_defaults, default_stats
 from utils.supabase_client import supabase
 
 router = APIRouter()
@@ -18,32 +17,24 @@ def list_projects(user: User = Depends(get_authenticated_user)) -> list[Project]
 
     return projects_list
 
-@router.post("/projects", response_model=Project, status_code=status.HTTP_201_CREATED)
+@router.post("/projects", response_model=None, status_code=status.HTTP_201_CREATED)
 def create_project(
     payload: ProjectCreate,
     user: User = Depends(get_authenticated_user),
-) -> Project:
+) -> None:
     timestamp = now_utc().isoformat()
-    project_id = new_id("proj")
-    target_models, agents = generate_defaults(payload.context, project_id)
     
     p_data = {
-        "id": project_id,
         "owner_id": user.id,
         "name": payload.name,
-        "context": payload.context.model_dump(),
-        "stats": default_stats().model_dump(),
+        "context": {},
+        "stats": {},
         "created_at": timestamp,
         "updated_at": timestamp,
     }
     supabase.table("projects").insert(p_data).execute()
-    
-    if target_models:
-        supabase.table("target_models").insert([m.model_dump() for m in target_models]).execute()
-    if agents:
-        supabase.table("agent_profiles").insert([a.model_dump() for a in agents]).execute()
         
-    return get_project_or_404(project_id)
+    return
 
 @router.get("/projects/{project_id}", response_model=Project)
 def get_project(project_id: str, user: User = Depends(get_authenticated_user)) -> Project:
@@ -97,7 +88,6 @@ def add_project_model(project_id: str, payload: TargetModelCreate, user: User = 
     assert_project_owner(project, user)
     
     tmodel_data = {
-         "id": new_id("model"),
          "project_id": project_id,
          **payload.model_dump()
     }
@@ -137,11 +127,23 @@ def delete_project_model(project_id: str, model_id: str, user: User = Depends(ge
 # --- Agents Sub-resources ---
 
 @router.get("/projects/{project_id}/agents", response_model=list[AgentProfile])
-def list_project_agents(project_id: str, user: User = Depends(get_authenticated_user)) -> list[AgentProfile]:
+def list_project_agents(project_id: str, user: User = Depends(get_authenticated_user)):
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    resp = supabase.table("agent_profiles").select("*").eq("project_id", project_id).execute()
-    return [AgentProfile(**row) for row in resp.data]
+
+    resp = (
+        supabase.table("agent_profiles")
+        .select("*, target_models!inner(project_id)")
+        .eq("target_models.project_id", project_id)
+        .execute()
+    )
+
+    agents = []
+    for row in resp.data:
+        row.pop("target_models", None) 
+        agents.append(AgentProfile(**row))
+
+    return agents
 
 @router.post("/projects/{project_id}/agents", response_model=AgentProfile, status_code=status.HTTP_201_CREATED)
 def add_project_agent(project_id: str, payload: AgentCreate, user: User = Depends(get_authenticated_user)) -> AgentProfile:
@@ -153,7 +155,6 @@ def add_project_agent(project_id: str, payload: AgentCreate, user: User = Depend
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="model_id no fue encontrado en este proyecto")
         
     agent_data = {
-         "id": new_id("agent"),
          "project_id": project_id,
          **payload.model_dump()
     }
@@ -217,7 +218,6 @@ def create_simulation(project_id: str, payload: SimulationCreate, user: User = D
     
     timestamp = now_utc().isoformat()
     run_data = {
-        "id": new_id("run"),
         "project_id": project_id,
         "scenario_name": payload.scenario_name,
         "provider": payload.provider,

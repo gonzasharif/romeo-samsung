@@ -169,3 +169,124 @@ export async function logout() {
   }
   localStorage.removeItem('session')
 }
+
+export async function getProjectModels(projectId: string) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+  
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/models`, {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${session.access_token}` }
+  })
+  if (!res.ok) throw new Error('Error al cargar modelos')
+  return await res.json()
+}
+
+export async function createProjectModel(projectId: string, payload: any) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+  
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/models`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) throw new Error('Error al crear modelo')
+  return await res.json()
+}
+
+export async function updateProjectModel(projectId: string, modelId: string, payload: any) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+  
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/models/${modelId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) throw new Error('Error al actualizar modelo')
+  return await res.json()
+}
+
+export async function deleteProjectModel(projectId: string, modelId: string) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+  
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/models/${modelId}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${session.access_token}` }
+  })
+  if (!res.ok && res.status !== 204) throw new Error('Error al eliminar modelo')
+}
+
+export async function getProjectAgents(projectId: string) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+  
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/agents`, {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${session.access_token}` }
+  })
+  if (!res.ok) throw new Error('Error al cargar agentes')
+  return await res.json()
+}
+
+export async function createProjectAgent(projectId: string, payload: any) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+  
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/agents`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}))
+    throw new Error(parseErrorDetail(error.detail, 'Error al crear agente'))
+  }
+  return await res.json()
+}
+
+export async function updateProjectAgent(projectId: string, agentId: string, payload: any) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+  
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/agents/${agentId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) throw new Error('Error al actualizar agente')
+  return await res.json()
+}
+
+export async function deleteProjectAgent(projectId: string, agentId: string) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+  
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/agents/${agentId}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${session.access_token}` }
+  })
+  if (!res.ok && res.status !== 204) throw new Error('Error al eliminar agente')
+}

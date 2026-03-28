@@ -13,42 +13,53 @@ type ProjectPageProps = {
 
 function ProjectPage({ projectId, onNavigate, copy }: ProjectPageProps) {
   const [project, setProject] = useState<any>(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [editForm, setEditForm] = useState<any>({})
+  const [form, setForm] = useState({
+    productDescription: '',
+    ageRange: '',
+    region: '',
+    price: '',
+    sex: 'any',
+  })
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     getProject(projectId)
-      .then(data => {
+      .then((data) => {
         setProject(data)
-        setEditForm({ name: data.name, ...data.context })
+        setForm({
+          productDescription: data.context?.product_description || '',
+          ageRange: data.context?.target_audience || '',
+          region: data.context?.market_context || '',
+          price: data.context?.pricing_notes || '',
+          sex: data.context?.category || 'any',
+        })
       })
-      .catch(err => {
+      .catch((err) => {
         console.error(err)
         onNavigate('/profile')
       })
   }, [projectId, onNavigate])
 
   const handleSave = async () => {
+    if (!project) return
+
     setIsSaving(true)
     try {
-      const payload = {
-        name: editForm.name,
+      const updated = await updateProject(projectId, {
+        name: project.name,
         context: {
-          company_summary: editForm.company_summary,
-          product_name: editForm.name,
-          product_description: editForm.product_description,
-          target_audience: editForm.target_audience,
-          pricing_notes: editForm.pricing_notes || '',
-          market_context: editForm.market_context || '',
-          category: editForm.category || ''
-        }
-      }
-      const updated = await updateProject(projectId, payload)
+          company_summary: project.context?.company_summary || project.name,
+          product_name: project.name,
+          product_description: form.productDescription,
+          target_audience: form.ageRange,
+          pricing_notes: form.price,
+          market_context: form.region,
+          category: form.sex,
+        },
+      })
       setProject(updated)
-      setIsEditing(false)
-    } catch (e: any) {
-      alert(e.message)
+    } catch (error: any) {
+      alert(error.message)
     } finally {
       setIsSaving(false)
     }
@@ -78,46 +89,104 @@ function ProjectPage({ projectId, onNavigate, copy }: ProjectPageProps) {
         </div>
       </header>
 
-      <section className="project-panel" style={{ marginTop: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ margin: 0 }}>{copy.project.heading}</h2>
-            <button 
-              className={isEditing ? 'primary-cta' : 'secondary-button'} 
-              onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-              disabled={isSaving}
-            >
-                {isEditing ? (isSaving ? copy.project.saving : copy.project.save) : copy.project.edit}
-            </button>
+      <section className="project-panel">
+        <div className="project-form-header">
+          <div>
+            <p className="panel-kicker">{copy.project.formTag}</p>
+            <h2>{copy.project.formTitle}</h2>
+          </div>
+          <button type="button" className="primary-cta" onClick={() => void handleSave()} disabled={isSaving}>
+            {isSaving ? copy.project.saving : copy.project.save}
+          </button>
         </div>
-        
-        {isEditing ? (
-            <div className="edit-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
-                <label className="field">
-                    <span>{copy.project.projectNameLabel}</span>
-                    <input type="text" value={editForm.name || ''} onChange={e => setEditForm({...editForm, name: e.target.value})} />
-                </label>
-                <label className="field">
-                    <span>{copy.project.companySummaryLabel}</span>
-                    <textarea rows={3} value={editForm.company_summary || ''} onChange={e => setEditForm({...editForm, company_summary: e.target.value})} />
-                </label>
-                <label className="field">
-                    <span>{copy.project.productDescriptionLabel}</span>
-                    <textarea rows={3} value={editForm.product_description || ''} onChange={e => setEditForm({...editForm, product_description: e.target.value})} />
-                </label>
-                <label className="field">
-                    <span>{copy.project.targetAudienceLabel}</span>
-                    <textarea rows={2} value={editForm.target_audience || ''} onChange={e => setEditForm({...editForm, target_audience: e.target.value})} />
-                </label>
-            </div>
-        ) : (
-            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <p><strong>{copy.project.companySummaryLabel}:</strong> {project.context?.company_summary}</p>
-                <p><strong>{copy.project.productDescriptionLabel}:</strong> {project.context?.product_description}</p>
-                <p><strong>{copy.project.targetAudienceLabel}:</strong> {project.context?.target_audience}</p>
-                <hr style={{ opacity: 0.2, margin: '1rem 0' }} />
-                <p className="modal-copy">{copy.project.description}</p>
-            </div>
-        )}
+
+        <div className="project-form">
+          <label className="field">
+            <span>{copy.project.productDescriptionShortLabel}</span>
+            <input
+              type="text"
+              maxLength={50}
+              value={form.productDescription}
+              onChange={(event) =>
+                setForm((currentForm) => ({
+                  ...currentForm,
+                  productDescription: event.target.value,
+                }))
+              }
+              placeholder={copy.project.productDescriptionShortPlaceholder}
+            />
+            <small className="field-hint">
+              {form.productDescription.length}/50
+            </small>
+          </label>
+
+          <div className="field-grid project-form-grid">
+            <label className="field">
+              <span>{copy.project.ageRangeLabel}</span>
+              <input
+                type="text"
+                value={form.ageRange}
+                onChange={(event) =>
+                  setForm((currentForm) => ({
+                    ...currentForm,
+                    ageRange: event.target.value,
+                  }))
+                }
+                placeholder={copy.project.ageRangePlaceholder}
+              />
+            </label>
+
+            <label className="field">
+              <span>{copy.project.regionLabel}</span>
+              <input
+                type="text"
+                value={form.region}
+                onChange={(event) =>
+                  setForm((currentForm) => ({
+                    ...currentForm,
+                    region: event.target.value,
+                  }))
+                }
+                placeholder={copy.project.regionPlaceholder}
+              />
+            </label>
+          </div>
+
+          <div className="field-grid project-form-grid">
+            <label className="field">
+              <span>{copy.project.priceLabel}</span>
+              <input
+                type="text"
+                value={form.price}
+                onChange={(event) =>
+                  setForm((currentForm) => ({
+                    ...currentForm,
+                    price: event.target.value,
+                  }))
+                }
+                placeholder={copy.project.pricePlaceholder}
+              />
+            </label>
+
+            <label className="field">
+              <span>{copy.project.sexLabel}</span>
+              <select
+                className="field-select"
+                value={form.sex}
+                onChange={(event) =>
+                  setForm((currentForm) => ({
+                    ...currentForm,
+                    sex: event.target.value,
+                  }))
+                }
+              >
+                <option value="any">{copy.project.any}</option>
+                <option value="female">{copy.project.female}</option>
+                <option value="male">{copy.project.male}</option>
+              </select>
+            </label>
+          </div>
+        </div>
       </section>
     </section>
   )
