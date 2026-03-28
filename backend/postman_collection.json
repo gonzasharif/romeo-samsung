@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Romeo Samsung API",
-    "description": "Colección generada para probar los endpoints del backend de Romeo Samsung. Contiene todas las rutas de Users, Projects, Models y Simulations.",
+    "description": "Colección generada para probar los endpoints del backend de Romeo Samsung. Contiene todas las rutas de Users, Projects, TargetModels, Agents y Simulations.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -18,6 +18,11 @@
     {
       "key": "project_id",
       "value": "TU_PROJECT_ID_AQUI",
+      "type": "string"
+    },
+    {
+      "key": "model_id",
+      "value": "ID_DEL_MODELO_DEMOGRAFICO",
       "type": "string"
     }
   ],
@@ -132,7 +137,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Nuevo Celular Plegable\",\n  \"context\": {\n    \"company_summary\": \"Líder en tecnología móvil\",\n    \"product_name\": \"Galaxy Z Fold X\",\n    \"product_description\": \"Smarthone plegable de 8 pulgadas\",\n    \"target_audience\": \"Profesionales y entusiastas tech\",\n    \"pricing_notes\": \"Premium, $2000\",\n    \"market_context\": \"Competencia con Apple\"\n  }\n}"
+              "raw": "{\n  \"name\": \"Nuevo Celular Plegable\",\n  \"context\": {\n    \"company_summary\": \"Líder en tecnología móvil\",\n    \"product_name\": \"Galaxy Z Fold X\",\n    \"product_description\": \"Smarthone\",\n    \"target_audience\": \"Profesionales\",\n    \"pricing_notes\": \"Premium\",\n    \"market_context\": \"Competencia Alta\",\n    \"category\": \"Smartphone\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/projects",
@@ -203,10 +208,10 @@
       ]
     },
     {
-      "name": "Models",
+      "name": "Target Models",
       "item": [
         {
-          "name": "List Project Models",
+          "name": "List Project Demographic Models",
           "request": {
             "method": "GET",
             "header": [
@@ -223,7 +228,7 @@
           }
         },
         {
-          "name": "Add Project Model",
+          "name": "Add Project Demographic Model",
           "request": {
             "method": "POST",
             "header": [
@@ -238,12 +243,59 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Usuario Estudiante\",\n  \"age_range\": \"18-24\",\n  \"segment\": \"Universitarios\",\n  \"motivations\": [ \"Busca bajo precio y diseño moderno\" ],\n  \"objections\": [ \"Poco presupuesto disponible\" ],\n  \"attitude\": \"Crítico\",\n  \"tech_savviness\": \"Avanzado\",\n  \"income_level\": \"Bajo\",\n  \"geography\": \"Latinoamérica\"\n}"
+              "raw": "{\n  \"name\": \"Perfil Estudiante Universitario\",\n  \"age_range\": \"18-24\",\n  \"income_level\": 0,\n  \"geography\": \"Latinoamérica\",\n  \"tech_savviness\": 2,\n  \"attitude\": 2\n}"
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/models",
               "host": ["{{base_url}}"],
               "path": ["projects", "{{project_id}}", "models"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "List Project Agents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/agents",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "agents"]
+            }
+          }
+        },
+        {
+          "name": "Add Project Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"model_id\": \"{{model_id}}\",\n  \"name\": \"Pedro Estudiante\",\n  \"gender\": \"Masculino\",\n  \"segment\": \"Universitarios becados\",\n  \"motivations\": [ \"Busca bajo precio y diseño moderno\" ],\n  \"objections\": [ \"Poco presupuesto disponible\" ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/agents",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "agents"]
             }
           }
         }
