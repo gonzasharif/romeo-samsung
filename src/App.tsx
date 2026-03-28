@@ -33,6 +33,17 @@ const steps = [
 function App() {
   return (
     <main className="landing-shell">
+      <header className="topbar">
+        <div className="auth-actions">
+          <a href="/" className="login-link">
+            Log in
+          </a>
+          <a href="/" className="signup-link">
+            Registrarse
+          </a>
+        </div>
+      </header>
+
       <section className="hero-section">
         <div className="hero-copy">
           <div className="eyebrow">
