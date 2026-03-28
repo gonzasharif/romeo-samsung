@@ -1,0 +1,322 @@
+{
+  "info": {
+    "name": "Romeo Samsung API",
+    "description": "Colección generada para probar los endpoints del backend de Romeo Samsung. Contiene todas las rutas de Users, Projects, Models y Simulations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "TU_USER_ID_AQUI",
+      "type": "string"
+    },
+    {
+      "key": "project_id",
+      "value": "TU_PROJECT_ID_AQUI",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Get Health Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Prueba Usuario\",\n  \"email\": \"test@test.com\",\n  \"password\": \"secreto123\",\n  \"company\": {\n    \"name\": \"Samsung\",\n    \"website\": \"https://samsung.com\",\n    \"industry\": \"Tecnología\",\n    \"description\": \"Electrónicos\"\n  },\n  \"billing\": {\n    \"contact_name\": \"Facuración Sr.\",\n    \"email\": \"billing@samsung.com\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Nombre Modificado\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "List Projects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": ["{{base_url}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nuevo Celular Plegable\",\n  \"context\": {\n    \"company_summary\": \"Líder en tecnología móvil\",\n    \"product_name\": \"Galaxy Z Fold X\",\n    \"product_description\": \"Smarthone plegable de 8 pulgadas\",\n    \"target_audience\": \"Profesionales y entusiastas tech\",\n    \"pricing_notes\": \"Premium, $2000\",\n    \"market_context\": \"Competencia con Apple\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": ["{{base_url}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Get Project",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Celular Actualizado\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Models",
+      "item": [
+        {
+          "name": "List Project Models",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/models",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "models"]
+            }
+          }
+        },
+        {
+          "name": "Add Project Model",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuario Estudiante\",\n  \"age_range\": \"18-24\",\n  \"segment\": \"Universitarios\",\n  \"motivations\": [ \"Busca bajo precio y diseño moderno\" ],\n  \"objections\": [ \"Poco presupuesto disponible\" ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/models",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "models"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stats",
+      "item": [
+        {
+          "name": "Get Project Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Simulations",
+      "item": [
+        {
+          "name": "List Simulations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/simulations",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "simulations"]
+            }
+          }
+        },
+        {
+          "name": "Create Simulation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scenario_name\": \"Democratización de Precios\",\n  \"questions\": [\n    \"¿Comprarías este teléfono de $2000?\",\n    \"¿Qué opinas de la pantalla plegable?\"\n  ],\n  \"overrides\": {},\n  \"provider\": \"mock\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/projects/{{project_id}}/simulations",
+              "host": ["{{base_url}}"],
+              "path": ["projects", "{{project_id}}", "simulations"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
