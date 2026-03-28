@@ -6,7 +6,7 @@ from pathlib import Path
 # Fix relative imports when running from root folder
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from routes import health, users, projects, auth
+from routes import health, users, projects, auth, api_llm
 
 app = FastAPI(
     title="Romeo Samsung API",
@@ -27,3 +27,4 @@ app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(projects.router)
+app.include_router(api_llm.router)
