@@ -1,14 +1,16 @@
+import type { ReactNode } from 'react'
 import type { RoutePath } from '../App'
 import type { Copy } from '../i18n'
 
 type ProfilePageProps = {
   onNavigate: (path: RoutePath) => void
   copy: Copy
+  topControls: ReactNode
 }
 
 const projects: { id: string; name: string; summary: string }[] = []
 
-function ProfilePage({ onNavigate, copy }: ProfilePageProps) {
+function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
   const hasProjects = projects.length > 0
 
   return (
@@ -19,6 +21,7 @@ function ProfilePage({ onNavigate, copy }: ProfilePageProps) {
           <h1 className="profile-title">{copy.profile.helloUser}</h1>
         </div>
         <div className="profile-actions">
+          {topControls}
           <button type="button" className="secondary-button" onClick={() => onNavigate('/')}>
             {copy.common.backHome}
           </button>

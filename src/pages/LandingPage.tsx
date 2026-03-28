@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import type { Copy } from '../i18n'
 
 type RoutePath = '/' | '/login' | '/signup'
@@ -6,9 +6,10 @@ type RoutePath = '/' | '/login' | '/signup'
 type LandingPageProps = {
   onNavigate: (path: RoutePath) => void
   copy: Copy
+  topControls: ReactNode
 }
 
-function LandingPage({ onNavigate, copy }: LandingPageProps) {
+function LandingPage({ onNavigate, copy, topControls }: LandingPageProps) {
   const handleRouteClick =
     (path: RoutePath) => (event: MouseEvent<HTMLAnchorElement>) => {
       event.preventDefault()
@@ -18,13 +19,16 @@ function LandingPage({ onNavigate, copy }: LandingPageProps) {
   return (
     <>
       <header className="topbar">
-        <div className="auth-actions">
+        <div className="topbar-actions">
+          {topControls}
+          <div className="auth-actions">
           <a href="/login" className="login-link" onClick={handleRouteClick('/login')}>
             {copy.common.login}
           </a>
           <a href="/signup" className="signup-link" onClick={handleRouteClick('/signup')}>
             {copy.common.signup}
           </a>
+          </div>
         </div>
       </header>
 

@@ -68,18 +68,20 @@ function App() {
   }
 
   const copy = messages[locale]
+  const topControls = (
+    <TopControls
+      copy={copy}
+      locale={locale}
+      theme={theme}
+      onToggleTheme={toggleTheme}
+      onChangeLocale={setLocale}
+    />
+  )
 
   if (route === '/login') {
     return (
       <main className="landing-shell auth-shell">
-        <TopControls
-          copy={copy}
-          locale={locale}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          onChangeLocale={setLocale}
-        />
-        <LoginPage onNavigate={navigate} copy={copy} />
+        <LoginPage onNavigate={navigate} copy={copy} topControls={topControls} />
       </main>
     )
   }
@@ -87,14 +89,7 @@ function App() {
   if (route === '/signup') {
     return (
       <main className="landing-shell auth-shell">
-        <TopControls
-          copy={copy}
-          locale={locale}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          onChangeLocale={setLocale}
-        />
-        <SignupPage onNavigate={navigate} copy={copy} />
+        <SignupPage onNavigate={navigate} copy={copy} topControls={topControls} />
       </main>
     )
   }
@@ -102,28 +97,14 @@ function App() {
   if (route === '/profile') {
     return (
       <main className="landing-shell profile-shell-wrapper">
-        <TopControls
-          copy={copy}
-          locale={locale}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          onChangeLocale={setLocale}
-        />
-        <ProfilePage onNavigate={navigate} copy={copy} />
+        <ProfilePage onNavigate={navigate} copy={copy} topControls={topControls} />
       </main>
     )
   }
 
   return (
     <main className="landing-shell">
-      <TopControls
-        copy={copy}
-        locale={locale}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onChangeLocale={setLocale}
-      />
-      <LandingPage onNavigate={navigate} copy={copy} />
+      <LandingPage onNavigate={navigate} copy={copy} topControls={topControls} />
     </main>
   )
 }
