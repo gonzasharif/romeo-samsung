@@ -3,6 +3,9 @@ import type { ReactNode } from 'react'
 import type { RoutePath } from '../App'
 import type { Copy, Locale } from '../i18n'
 import SimulationCard from '../components/SimulationCard'
+import UserPersonaCard from '../components/UserPersonaCard'
+import type { UserPersona } from '../components/UserPersonaCard'
+import UserPersonaModal from '../modals/UserPersonaModal'
 import { getProject, updateProject, getProjectSimulations, createProjectSimulation } from '../services/api'
 
 type ProjectPageProps = {
@@ -17,6 +20,8 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
   const newSimulationRef = useRef<HTMLElement | null>(null)
   const [project, setProject] = useState<any>(null)
   const [simulations, setSimulations] = useState<any[]>([])
+  const [userPersonas, setUserPersonas] = useState<UserPersona[]>([])
+  const [editingPersona, setEditingPersona] = useState<UserPersona | null>(null)
   const [form, setForm] = useState({
     productDescription: '',
     ageRange: '',
@@ -26,6 +31,36 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
   })
   const [isSaving, setIsSaving] = useState(false)
   const [isFormVisible, setIsFormVisible] = useState(false)
+
+  const buildDraftPersonas = (): UserPersona[] => [
+    {
+      id: crypto.randomUUID(),
+      name: copy.project.userPersonaPrimaryName,
+      summary: copy.project.userPersonaPrimarySummary,
+      ageRange: form.ageRange,
+      region: form.region,
+      price: form.price,
+      sex: form.sex,
+    },
+    {
+      id: crypto.randomUUID(),
+      name: copy.project.userPersonaSecondaryName,
+      summary: copy.project.userPersonaSecondarySummary,
+      ageRange: form.ageRange,
+      region: form.region,
+      price: form.price,
+      sex: form.sex,
+    },
+    {
+      id: crypto.randomUUID(),
+      name: copy.project.userPersonaTertiaryName,
+      summary: copy.project.userPersonaTertiarySummary,
+      ageRange: form.ageRange,
+      region: form.region,
+      price: form.price,
+      sex: form.sex,
+    },
+  ]
 
   useEffect(() => {
     let isMounted = true
@@ -107,6 +142,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
       })
       setProject(updatedProject)
       setSimulations((currentSimulations) => [newSimulation, ...currentSimulations])
+      setUserPersonas(buildDraftPersonas())
       setIsFormVisible(false)
     } catch (error: any) {
       alert(error.message)
@@ -274,7 +310,48 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
             </div>
           </section>
         ) : null}
+
+        {userPersonas.length > 0 ? (
+          <section className="user-personas-section">
+            <div className="project-new-simulation-heading">
+              <p className="panel-kicker">{copy.project.userPersonasTag}</p>
+              <h2>{copy.project.userPersonasTitle}</h2>
+            </div>
+
+            <div className="user-persona-list">
+              {userPersonas.map((persona) => (
+                <UserPersonaCard
+                  key={persona.id}
+                  persona={persona}
+                  copy={copy}
+                  onEdit={(selectedPersona) => setEditingPersona(selectedPersona)}
+                  onDelete={(personaId) =>
+                    setUserPersonas((currentPersonas) =>
+                      currentPersonas.filter((persona) => persona.id !== personaId),
+                    )
+                  }
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </section>
+
+      {editingPersona ? (
+        <UserPersonaModal
+          copy={copy}
+          persona={editingPersona}
+          onClose={() => setEditingPersona(null)}
+          onSave={(updatedPersona) => {
+            setUserPersonas((currentPersonas) =>
+              currentPersonas.map((persona) =>
+                persona.id === updatedPersona.id ? updatedPersona : persona,
+              ),
+            )
+            setEditingPersona(null)
+          }}
+        />
+      ) : null}
     </section>
   )
 }
