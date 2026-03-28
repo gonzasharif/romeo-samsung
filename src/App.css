@@ -243,6 +243,11 @@ html[data-theme='dark'] .weight-total.invalid {
   border-color: rgba(255, 77, 93, 0.3);
 }
 
+html[data-theme='dark'] .agent-errors {
+  background: rgba(255, 77, 93, 0.12);
+  border-color: rgba(255, 77, 93, 0.3);
+}
+
 html[data-theme='dark'] .project-delete-button {
   background: rgba(255, 79, 136, 0.12);
   border-color: rgba(255, 79, 136, 0.24);
@@ -1399,6 +1404,21 @@ html[data-theme='dark'] .empty-projects {
   font-weight: 600;
   margin: 0.5rem 0;
   text-align: center;
+}
+
+.agent-errors {
+  padding: 1rem 1.2rem;
+  border-radius: 1rem;
+  background: rgba(255, 77, 93, 0.08);
+  border: 1px solid rgba(255, 77, 93, 0.2);
+  margin: 1rem 0;
+}
+
+.error-message {
+  margin: 0.4rem 0;
+  color: #ff4d5d;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .auth-switch {
