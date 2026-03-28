@@ -68,7 +68,7 @@ function ModelModal({ copy, model, onClose, onSave }: ModelModalProps) {
             <input
               type="number"
               min={0}
-              max={3}
+              max={2}
               value={attitude}
               onChange={(e) => setAttitude(e.target.value)}
             />
