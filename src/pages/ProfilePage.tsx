@@ -21,7 +21,7 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
           <h1 className="profile-title">{copy.profile.helloUser}</h1>
         </div>
         <div className="profile-actions">
-          {topControls}
+        
           <button type="button" className="secondary-button" onClick={() => onNavigate('/')}>
             {copy.common.backHome}
           </button>
