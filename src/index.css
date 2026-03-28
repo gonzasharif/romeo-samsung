@@ -1,0 +1,110 @@
+:root {
+  --bg: #fffaf5;
+  --bg-soft: #fff3e4;
+  --surface: rgba(255, 255, 255, 0.7);
+  --text: #5f586f;
+  --text-h: #1f1636;
+  --muted-strong: #7c6f95;
+  --border: rgba(31, 22, 54, 0.1);
+  --accent: #ff5f6d;
+  --accent-strong: #8b46ff;
+  --sans:
+    'Sora', 'Avenir Next', 'Montserrat', 'Segoe UI', sans-serif;
+  --heading:
+    'Clash Display', 'Sora', 'Avenir Next', 'Segoe UI', sans-serif;
+
+  font: 18px/1.65 var(--sans);
+  letter-spacing: 0.01em;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(255, 165, 120, 0.2), transparent 30%),
+    linear-gradient(180deg, #fffaf5 0%, #fff6ef 32%, #fdfcff 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.38) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.32) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at center, black 45%, transparent 85%);
+  opacity: 0.35;
+}
+
+a {
+  color: inherit;
+}
+
+#root {
+  width: min(1200px, calc(100% - 32px));
+  margin: 16px auto;
+  min-height: calc(100vh - 32px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.3));
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 2rem;
+  box-shadow:
+    0 20px 80px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--heading);
+  font-weight: 700;
+  line-height: 1.03;
+  letter-spacing: -0.04em;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: clamp(3rem, 7vw, 5.8rem);
+}
+
+h2 {
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+}
+
+h3 {
+  font-size: 1.1rem;
+}
+
+p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  :root {
+    font-size: 16px;
+  }
+
+  #root {
+    width: min(100%, calc(100% - 16px));
+    margin: 8px auto;
+    min-height: calc(100vh - 16px);
+    border-radius: 1.25rem;
+  }
+}
