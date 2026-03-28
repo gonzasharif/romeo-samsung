@@ -1,13 +1,15 @@
 import AuthLayout from './AuthLayout'
 import type { RoutePath } from '../App'
+import type { Copy } from '../i18n'
 
 type LoginPageProps = {
   onNavigate: (path: RoutePath) => void
+  copy: Copy
 }
 
-function LoginPage({ onNavigate }: LoginPageProps) {
+function LoginPage({ onNavigate, copy }: LoginPageProps) {
   return (
-    <AuthLayout mode="login" onNavigate={onNavigate}>
+    <AuthLayout mode="login" onNavigate={onNavigate} copy={copy}>
       <form
         className="auth-form"
         onSubmit={(event) => {
@@ -16,31 +18,31 @@ function LoginPage({ onNavigate }: LoginPageProps) {
         }}
       >
         <label className="field">
-          <span>Email</span>
-          <input type="email" name="email" placeholder="vos@empresa.com" required />
+          <span>{copy.auth.email}</span>
+          <input type="email" name="email" placeholder={copy.auth.emailPlaceholderLogin} required />
         </label>
 
         <label className="field">
-          <span>Password</span>
-          <input type="password" name="password" placeholder="Ingresá tu contraseña" required />
+          <span>{copy.auth.password}</span>
+          <input type="password" name="password" placeholder={copy.auth.passwordPlaceholder} required />
         </label>
 
         <div className="auth-row">
           <label className="checkbox">
             <input type="checkbox" name="remember" />
-            <span>Recordarme</span>
+            <span>{copy.auth.rememberMe}</span>
           </label>
           <button
             type="button"
             className="subtle-link subtle-link-button"
             onClick={() => onNavigate('/signup')}
           >
-            Recuperar acceso
+            {copy.auth.recoverAccess}
           </button>
         </div>
 
         <button type="submit" className="submit-button">
-          Entrar al dashboard
+          {copy.auth.dashboardCta}
         </button>
       </form>
     </AuthLayout>

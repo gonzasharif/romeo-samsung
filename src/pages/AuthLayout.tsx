@@ -1,71 +1,67 @@
 import type { ReactNode } from 'react'
 import type { RoutePath } from '../App'
+import type { Copy } from '../i18n'
 
 type AuthLayoutProps = {
   mode: 'login' | 'signup'
   onNavigate: (path: RoutePath) => void
   children: ReactNode
+  copy: Copy
 }
 
-function AuthLayout({ mode, onNavigate, children }: AuthLayoutProps) {
+function AuthLayout({ mode, onNavigate, children, copy }: AuthLayoutProps) {
   const isSignup = mode === 'signup'
 
   return (
     <section className="auth-layout">
       <button type="button" className="back-home" onClick={() => onNavigate('/')}>
-        Volver al inicio
+        {copy.common.backHome}
       </button>
 
       <div className="auth-showcase">
-        <div className="auth-badge">{isSignup ? 'Nuevo workspace' : 'Acceso seguro'}</div>
-        <h1>{isSignup ? 'Creá tu cuenta y empezá a validar' : 'Volvé a tu laboratorio de ideas'}</h1>
+        <div className="auth-badge">{isSignup ? copy.auth.signupBadge : copy.auth.loginBadge}</div>
+        <h1>{isSignup ? copy.auth.signupTitle : copy.auth.loginTitle}</h1>
         <p className="auth-lead">
-          {isSignup
-            ? 'Registrate para crear proyectos, generar perfiles de agentes y lanzar simulaciones con señales reales de demanda.'
-            : 'Entrá para revisar corridas, comparar escenarios y seguir ajustando tu producto con evidencia.'}
+          {isSignup ? copy.auth.signupLead : copy.auth.loginLead}
         </p>
 
         <div className="auth-visual">
           <div className="pulse-ring ring-one" />
           <div className="pulse-ring ring-two" />
           <div className="visual-core">
-            <span>AI</span>
+            <span>{copy.auth.aiCore}</span>
           </div>
           <div className="floating-card float-a">
             <strong>72%</strong>
-            <span>demanda estimada</span>
+            <span>{copy.auth.demandEstimated}</span>
           </div>
           <div className="floating-card float-b">
-            <strong>3 perfiles</strong>
-            <span>listos para simular</span>
+            <strong>{copy.auth.profilesCount}</strong>
+            <span>{copy.auth.profilesReady}</span>
           </div>
           <div className="floating-card float-c">
-            <strong>+1 escenario</strong>
-            <span>compará precio y propuesta</span>
+            <strong>{copy.auth.scenarioCount}</strong>
+            <span>{copy.auth.compareScenario}</span>
           </div>
         </div>
       </div>
 
       <div className="auth-panel">
         <div className="auth-panel-inner">
-          <p className="section-tag">{isSignup ? 'Registro' : 'Log in'}</p>
-          <h2>{isSignup ? 'Abrí tu cuenta' : 'Ingresá a tu cuenta'}</h2>
-          <p className="auth-copy">
-            {isSignup
-              ? 'Completá tus datos para crear tu espacio de trabajo.'
-              : 'Usá tu email corporativo y tu contraseña para entrar.'}
-          </p>
+          <p className="section-tag">{isSignup ? copy.auth.signupTag : copy.auth.loginTag}</p>
+          <h2>{isSignup ? copy.auth.signupHeading : copy.auth.loginHeading}</h2>
+          <p className="auth-copy">{isSignup ? copy.auth.signupCopy : copy.auth.loginCopy}</p>
 
           {children}
 
           <p className="auth-switch">
-            {isSignup ? '¿Ya tenés cuenta?' : '¿Todavía no tenés cuenta?'}{' '}
+            {isSignup ? copy.auth.alreadyHaveAccount : copy.auth.noAccount}{' '}
             <button
               type="button"
               className="inline-link-button"
               onClick={() => onNavigate(isSignup ? '/login' : '/signup')}
             >
-              {isSignup ? 'Iniciá sesión' : 'Registrate'}
+              {isSignup ? copy.auth.signIn : copy.auth.signUp}
             </button>
           </p>
         </div>

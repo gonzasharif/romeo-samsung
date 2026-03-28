@@ -1,27 +1,29 @@
 import type { RoutePath } from '../App'
+import type { Copy } from '../i18n'
 
 type ProfilePageProps = {
   onNavigate: (path: RoutePath) => void
+  copy: Copy
 }
 
 const projects: { id: string; name: string; summary: string }[] = []
 
-function ProfilePage({ onNavigate }: ProfilePageProps) {
+function ProfilePage({ onNavigate, copy }: ProfilePageProps) {
   const hasProjects = projects.length > 0
 
   return (
     <section className="profile-shell">
       <header className="profile-topbar">
         <div>
-          <p className="section-tag">Workspace</p>
-          <h1 className="profile-title">Hola, Ada Founder</h1>
+          <p className="section-tag">{copy.profile.workspace}</p>
+          <h1 className="profile-title">{copy.profile.helloUser}</h1>
         </div>
         <div className="profile-actions">
           <button type="button" className="secondary-button" onClick={() => onNavigate('/')}>
-            Volver al inicio
+            {copy.common.backHome}
           </button>
           <button type="button" className="primary-cta profile-cta">
-            Nuevo proyecto
+            {copy.common.createProject}
           </button>
         </div>
       </header>
@@ -29,11 +31,11 @@ function ProfilePage({ onNavigate }: ProfilePageProps) {
       <section className="profile-panel">
         <div className="profile-panel-header">
           <div>
-            <p className="panel-kicker">Tus proyectos</p>
-            <h2>Espacio de validación</h2>
+            <p className="panel-kicker">{copy.profile.projectsKicker}</p>
+            <h2>{copy.profile.projectsTitle}</h2>
           </div>
           <span className="project-count">
-            {hasProjects ? `${projects.length} proyectos` : 'Sin proyectos'}
+            {hasProjects ? copy.profile.projectsCount(projects.length) : copy.common.noProjects}
           </span>
         </div>
 
@@ -53,8 +55,8 @@ function ProfilePage({ onNavigate }: ProfilePageProps) {
               <span />
               <span />
             </div>
-            <h3>No hay proyectos todavía :(</h3>
-            <p>Creá uno nuevo para empezar a validar ideas con focus groups de IA.</p>
+            <h3>{copy.common.emptyProjects}</h3>
+            <p>{copy.profile.emptyText}</p>
           </div>
         )}
       </section>

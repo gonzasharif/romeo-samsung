@@ -1,13 +1,15 @@
 import AuthLayout from './AuthLayout'
 import type { RoutePath } from '../App'
+import type { Copy } from '../i18n'
 
 type SignupPageProps = {
   onNavigate: (path: RoutePath) => void
+  copy: Copy
 }
 
-function SignupPage({ onNavigate }: SignupPageProps) {
+function SignupPage({ onNavigate, copy }: SignupPageProps) {
   return (
-    <AuthLayout mode="signup" onNavigate={onNavigate}>
+    <AuthLayout mode="signup" onNavigate={onNavigate} copy={copy}>
       <form
         className="auth-form signup-form"
         onSubmit={(event) => {
@@ -17,33 +19,40 @@ function SignupPage({ onNavigate }: SignupPageProps) {
       >
         <div className="field-grid">
           <label className="field">
-            <span>Nombre completo</span>
-            <input type="text" name="full_name" placeholder="Ada Founder" required />
+            <span>{copy.auth.fullName}</span>
+            <input type="text" name="full_name" placeholder={copy.auth.fullNamePlaceholder} required />
           </label>
           <label className="field">
-            <span>Email</span>
-            <input type="email" name="email" placeholder="ada@empresa.com" required />
+            <span>{copy.auth.email}</span>
+            <input type="email" name="email" placeholder={copy.auth.emailPlaceholderSignup} required />
           </label>
         </div>
 
         <div className="field-grid">
           <label className="field">
-            <span>Password</span>
-            <input type="password" name="password" placeholder="Mínimo 8 caracteres" required />
+            <span>{copy.auth.password}</span>
+            <input type="password" name="password" placeholder={copy.auth.passwordPlaceholderMin} required />
           </label>
           <label className="field">
-            <span>Confirmar password</span>
+            <span>{copy.auth.confirmPassword}</span>
             <input
               type="password"
               name="confirm_password"
-              placeholder="Volvé a ingresar tu password"
+              placeholder={copy.auth.confirmPasswordPlaceholder}
               required
             />
           </label>
         </div>
 
+        <div className="field-grid">
+          <label className="field">
+            <span>{copy.auth.company}</span>
+            <input type="text" name="company_name" placeholder={copy.auth.companyPlaceholder} required />
+          </label>
+        </div>
+
         <button type="submit" className="submit-button">
-          Crear cuenta
+          {copy.common.createAccount}
         </button>
       </form>
     </AuthLayout>

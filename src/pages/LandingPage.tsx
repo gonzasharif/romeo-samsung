@@ -1,42 +1,14 @@
 import type { MouseEvent } from 'react'
+import type { Copy } from '../i18n'
 
 type RoutePath = '/' | '/login' | '/signup'
 
 type LandingPageProps = {
   onNavigate: (path: RoutePath) => void
+  copy: Copy
 }
 
-const signals = [
-  {
-    title: 'Demanda real antes de invertir',
-    description:
-      'Probá pricing, propuesta de valor y objeciones con agentes que reaccionan como clientes de distintos perfiles.',
-  },
-  {
-    title: 'Insights accionables en minutos',
-    description:
-      'Detectá qué genera interés, qué confunde y qué frena la compra sin esperar semanas de investigación.',
-  },
-  {
-    title: 'Decisiones con menos intuición ciega',
-    description:
-      'Convertí una idea en evidencia: segmentos, gatillos de compra, objeciones y señales de tracción.',
-  },
-]
-
-const personas = [
-  { name: 'Luz, founder bootstrap', mood: 'Necesita validar rápido sin quemar caja' },
-  { name: 'Marco, buyer escéptico', mood: 'Quiere pruebas concretas y compara alternativas' },
-  { name: 'Sofía, early adopter', mood: 'Se entusiasma si el problema duele de verdad' },
-]
-
-const steps = [
-  'Describís tu idea, público objetivo y precio tentativo.',
-  'Lanzamos varios agentes de IA con perfiles de clientes y moderación automática.',
-  'Recibís un focus group simulado con señales de demanda, objeciones y próximos pasos.',
-]
-
-function LandingPage({ onNavigate }: LandingPageProps) {
+function LandingPage({ onNavigate, copy }: LandingPageProps) {
   const handleRouteClick =
     (path: RoutePath) => (event: MouseEvent<HTMLAnchorElement>) => {
       event.preventDefault()
@@ -48,61 +20,54 @@ function LandingPage({ onNavigate }: LandingPageProps) {
       <header className="topbar">
         <div className="auth-actions">
           <a href="/login" className="login-link" onClick={handleRouteClick('/login')}>
-            Log in
+            {copy.common.login}
           </a>
           <a href="/signup" className="signup-link" onClick={handleRouteClick('/signup')}>
-            Registrarse
+            {copy.common.signup}
           </a>
         </div>
       </header>
 
       <section className="hero-section">
         <div className="hero-copy">
-          <div className="eyebrow">
-            Validá demanda con agentes de IA antes de construir
-          </div>
+          <div className="eyebrow">{copy.landing.eyebrow}</div>
           <h1>
-            Descubrí si tu idea de negocio
-            <span> despierta ganas reales de compra</span>
+            {copy.landing.title}
+            <span> {copy.landing.titleAccent}</span>
           </h1>
-          <p className="hero-text">
-            Simulamos un focus group con agentes de IA que representan distintos
-            perfiles de cliente. Vos traés la idea; la plataforma devuelve
-            interés percibido, objeciones, intención de pago y oportunidades de
-            mejora.
-          </p>
+          <p className="hero-text">{copy.landing.description}</p>
           <div className="hero-actions">
             <a href="/signup" className="primary-cta" onClick={handleRouteClick('/signup')}>
-              Quiero validar mi idea
+              {copy.landing.primaryCta}
             </a>
             <a href="#como-funciona" className="secondary-cta">
-              Ver cómo funciona
+              {copy.landing.secondaryCta}
             </a>
           </div>
           <div className="hero-proof">
-            <span>Focus group simulado</span>
-            <span>Segmentación automática</span>
-            <span>Señales de demanda</span>
+            {copy.landing.proof.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
           </div>
         </div>
 
-        <div className="hero-panel" aria-label="Vista previa del focus group IA">
+        <div className="hero-panel" aria-label={copy.landing.heroPanelAria}>
           <div className="orb orb-one" />
           <div className="orb orb-two" />
 
           <div className="panel-header">
             <div>
-              <p className="panel-kicker">Sesión en vivo</p>
-              <h2>Focus group IA para una app de viandas saludables</h2>
+              <p className="panel-kicker">{copy.landing.sessionLive}</p>
+              <h2>{copy.landing.heroPanelTitle}</h2>
             </div>
             <div className="score-pill">
               <strong>73%</strong>
-              <span>señal de demanda</span>
+              <span>{copy.landing.demandSignal}</span>
             </div>
           </div>
 
           <div className="persona-grid">
-            {personas.map((persona) => (
+            {copy.landing.personas.map((persona) => (
               <article key={persona.name} className="persona-card">
                 <span className="persona-dot" />
                 <h3>{persona.name}</h3>
@@ -112,33 +77,23 @@ function LandingPage({ onNavigate }: LandingPageProps) {
           </div>
 
           <div className="insight-card">
-            <p className="insight-label">Hallazgo principal</p>
-            <p className="insight-text">
-              El problema interesa mucho en profesionales con poco tiempo, pero
-              el precio mensual necesita una propuesta más clara de ahorro y
-              conveniencia.
-            </p>
+            <p className="insight-label">{copy.landing.insightLabel}</p>
+            <p className="insight-text">{copy.landing.insightText}</p>
           </div>
 
           <div className="signal-bars" aria-hidden="true">
-            <div>
-              <span>Interés</span>
-              <i style={{ width: '84%' }} />
-            </div>
-            <div>
-              <span>Intención de pago</span>
-              <i style={{ width: '66%' }} />
-            </div>
-            <div>
-              <span>Claridad de propuesta</span>
-              <i style={{ width: '58%' }} />
-            </div>
+            {copy.landing.bars.map((bar) => (
+              <div key={bar.label}>
+                <span>{bar.label}</span>
+                <i style={{ width: bar.width }} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="signal-section">
-        {signals.map((signal, index) => (
+        {copy.landing.signals.map((signal, index) => (
           <article key={signal.title} className="signal-card">
             <p className="card-index">0{index + 1}</p>
             <h3>{signal.title}</h3>
@@ -149,14 +104,16 @@ function LandingPage({ onNavigate }: LandingPageProps) {
 
       <section id="como-funciona" className="workflow-section">
         <div className="section-heading">
-          <p className="section-tag">Cómo funciona</p>
-          <h2>Una landing pensada para que el valor se entienda en 20 segundos</h2>
+          <p className="section-tag">{copy.landing.howItWorksTag}</p>
+          <h2>{copy.landing.howItWorksTitle}</h2>
         </div>
 
         <div className="workflow-grid">
-          {steps.map((step, index) => (
+          {copy.landing.steps.map((step, index) => (
             <article key={step} className="workflow-card">
-              <span className="workflow-step">Paso {index + 1}</span>
+              <span className="workflow-step">
+                {copy.landing.stepLabel} {index + 1}
+              </span>
               <p>{step}</p>
             </article>
           ))}
@@ -165,15 +122,12 @@ function LandingPage({ onNavigate }: LandingPageProps) {
 
       <section id="cta" className="cta-section">
         <div>
-          <p className="section-tag">Listo para probar</p>
-          <h2>No adivines el mercado. Hacelo hablar.</h2>
-          <p>
-            Mostrale a potenciales clientes simulados tu propuesta y obtené una
-            lectura clara de demanda antes de invertir tiempo y plata.
-          </p>
+          <p className="section-tag">{copy.landing.readyTag}</p>
+          <h2>{copy.landing.readyTitle}</h2>
+          <p>{copy.landing.readyDescription}</p>
         </div>
         <a href="/signup" className="primary-cta cta-inline" onClick={handleRouteClick('/signup')}>
-          Empezar validación
+          {copy.landing.readyCta}
         </a>
       </section>
     </>
