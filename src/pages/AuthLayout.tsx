@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
+import type { RoutePath } from '../App'
 
 type AuthLayoutProps = {
   mode: 'login' | 'signup'
-  onNavigate: (path: '/' | '/login' | '/signup') => void
+  onNavigate: (path: RoutePath) => void
   children: ReactNode
 }
 
@@ -11,10 +12,11 @@ function AuthLayout({ mode, onNavigate, children }: AuthLayoutProps) {
 
   return (
     <section className="auth-layout">
+      <button type="button" className="back-home" onClick={() => onNavigate('/')}>
+        Volver al inicio
+      </button>
+
       <div className="auth-showcase">
-        <button type="button" className="back-home" onClick={() => onNavigate('/')}>
-          Volver al inicio
-        </button>
         <div className="auth-badge">{isSignup ? 'Nuevo workspace' : 'Acceso seguro'}</div>
         <h1>{isSignup ? 'Creá tu cuenta y empezá a validar' : 'Volvé a tu laboratorio de ideas'}</h1>
         <p className="auth-lead">

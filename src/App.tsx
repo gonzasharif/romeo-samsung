@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
+import ProfilePage from './pages/ProfilePage'
 import SignupPage from './pages/SignupPage'
 import './App.css'
 
-export type RoutePath = '/' | '/login' | '/signup'
+export type RoutePath = '/' | '/login' | '/signup' | '/profile'
 
 function normalizePath(pathname: string): RoutePath {
   if (pathname === '/login') return '/login'
+  if (pathname === '/profile') return '/profile'
   if (pathname === '/signup') return '/signup'
   return '/'
 }
@@ -40,6 +42,14 @@ function App() {
     return (
       <main className="landing-shell auth-shell">
         <SignupPage onNavigate={navigate} />
+      </main>
+    )
+  }
+
+  if (route === '/profile') {
+    return (
+      <main className="landing-shell profile-shell-wrapper">
+        <ProfilePage onNavigate={navigate} />
       </main>
     )
   }

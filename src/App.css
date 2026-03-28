@@ -12,6 +12,11 @@
   padding-bottom: 0;
 }
 
+.profile-shell-wrapper {
+  min-height: 100vh;
+  padding: 2rem clamp(1.25rem, 4vw, 3rem);
+}
+
 .topbar {
   display: flex;
   justify-content: flex-end;
@@ -446,7 +451,158 @@
   z-index: -1;
 }
 
+.profile-shell {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.profile-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-title {
+  margin-top: 0.9rem;
+  font-size: clamp(2.6rem, 5vw, 4.4rem);
+}
+
+.profile-actions {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.2rem;
+  padding: 0.85rem 1.15rem;
+  border-radius: 999px;
+  border: 1px solid rgba(23, 37, 84, 0.1);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 12px 30px rgba(23, 37, 84, 0.06);
+  color: var(--text-h);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 180ms ease;
+}
+
+.secondary-button:hover,
+.profile-cta:hover {
+  transform: translateY(-2px);
+}
+
+.profile-cta {
+  border: 0;
+  cursor: pointer;
+}
+
+.profile-panel {
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border-radius: 2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 239, 0.72)),
+    rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 26px 70px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+}
+
+.profile-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.project-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(23, 37, 84, 0.08);
+  color: var(--muted-strong);
+  font-weight: 700;
+}
+
+.project-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.project-card {
+  padding: 1.15rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(23, 37, 84, 0.08);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
+}
+
+.project-card h3 {
+  margin-bottom: 0.5rem;
+}
+
+.empty-projects {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 0.85rem;
+  min-height: 22rem;
+  margin-top: 1.5rem;
+  padding: 2rem;
+  border-radius: 1.6rem;
+  border: 1px dashed rgba(124, 92, 255, 0.22);
+  background:
+    radial-gradient(circle at top, rgba(255, 122, 89, 0.1), transparent 45%),
+    rgba(255, 255, 255, 0.55);
+}
+
+.empty-projects h3 {
+  font-size: 1.45rem;
+}
+
+.empty-projects p {
+  max-width: 32rem;
+}
+
+.empty-illustration {
+  position: relative;
+  width: 7rem;
+  height: 7rem;
+}
+
+.empty-illustration span {
+  position: absolute;
+  border-radius: 1.2rem;
+  background: linear-gradient(135deg, #ff7a59 0%, #ff4f88 45%, #7c5cff 100%);
+  box-shadow: 0 16px 30px rgba(124, 92, 255, 0.2);
+}
+
+.empty-illustration span:nth-child(1) {
+  inset: 0.8rem 2rem 2rem 0.8rem;
+  opacity: 0.35;
+}
+
+.empty-illustration span:nth-child(2) {
+  inset: 1.4rem 1.3rem 1.3rem 1.4rem;
+  opacity: 0.65;
+}
+
+.empty-illustration span:nth-child(3) {
+  inset: 2rem 0.8rem 0.8rem 2rem;
+}
+
 .auth-layout {
+  position: relative;
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(320px, 1.05fr) minmax(360px, 0.95fr);
@@ -491,6 +647,9 @@
 }
 
 .back-home {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -505,6 +664,7 @@
   font-weight: 600;
   font: inherit;
   cursor: pointer;
+  z-index: 2;
 }
 
 .auth-badge {
@@ -788,6 +948,16 @@
     padding-top: 1rem;
   }
 
+  .profile-topbar,
+  .profile-panel-header {
+    flex-direction: column;
+  }
+
+  .profile-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
   .auth-layout {
     grid-template-columns: 1fr;
   }
@@ -852,7 +1022,9 @@
   .workflow-card,
   .cta-section,
   .auth-panel-inner,
-  .auth-visual {
+  .auth-visual,
+  .profile-panel,
+  .empty-projects {
     border-radius: 1.4rem;
   }
 
@@ -865,7 +1037,9 @@
   .primary-cta,
   .secondary-cta,
   .cta-inline,
-  .submit-button {
+  .submit-button,
+  .secondary-button,
+  .profile-cta {
     width: 100%;
   }
 

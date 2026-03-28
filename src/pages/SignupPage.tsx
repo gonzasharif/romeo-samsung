@@ -1,13 +1,20 @@
 import AuthLayout from './AuthLayout'
+import type { RoutePath } from '../App'
 
 type SignupPageProps = {
-  onNavigate: (path: '/' | '/login' | '/signup') => void
+  onNavigate: (path: RoutePath) => void
 }
 
 function SignupPage({ onNavigate }: SignupPageProps) {
   return (
     <AuthLayout mode="signup" onNavigate={onNavigate}>
-      <form className="auth-form signup-form" onSubmit={(event) => event.preventDefault()}>
+      <form
+        className="auth-form signup-form"
+        onSubmit={(event) => {
+          event.preventDefault()
+          onNavigate('/profile')
+        }}
+      >
         <div className="field-grid">
           <label className="field">
             <span>Nombre completo</span>

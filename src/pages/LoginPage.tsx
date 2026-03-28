@@ -1,13 +1,20 @@
 import AuthLayout from './AuthLayout'
+import type { RoutePath } from '../App'
 
 type LoginPageProps = {
-  onNavigate: (path: '/' | '/login' | '/signup') => void
+  onNavigate: (path: RoutePath) => void
 }
 
 function LoginPage({ onNavigate }: LoginPageProps) {
   return (
     <AuthLayout mode="login" onNavigate={onNavigate}>
-      <form className="auth-form" onSubmit={(event) => event.preventDefault()}>
+      <form
+        className="auth-form"
+        onSubmit={(event) => {
+          event.preventDefault()
+          onNavigate('/profile')
+        }}
+      >
         <label className="field">
           <span>Email</span>
           <input type="email" name="email" placeholder="vos@empresa.com" required />
