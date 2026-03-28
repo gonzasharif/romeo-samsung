@@ -211,6 +211,20 @@ html[data-theme='dark'] .project-delete-button {
   color: #ff9abb;
 }
 
+html[data-theme='dark'] .simulation-card {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(17, 24, 39, 0.74)),
+    rgba(15, 23, 42, 0.72);
+  border-color: rgba(148, 163, 184, 0.14);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme='dark'] .project-form-panel {
+  border-top-color: rgba(148, 163, 184, 0.14);
+}
+
 html[data-theme='dark'] .empty-projects {
   border-style: solid;
 }
@@ -720,14 +734,100 @@ html[data-theme='dark'] .empty-projects {
   margin-top: 1.5rem;
 }
 
+.project-simulations-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
 .project-form-footer {
   display: flex;
   justify-content: flex-start;
   margin-top: 0.75rem;
 }
 
+.project-form-panel {
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(23, 37, 84, 0.08);
+}
+
 .project-form-grid {
   align-items: start;
+}
+
+.simulation-list {
+  display: grid;
+  gap: 1rem;
+  max-height: 24rem;
+  overflow: auto;
+  padding-right: 0.35rem;
+}
+
+.simulation-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.15rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(23, 37, 84, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.05);
+}
+
+.simulation-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.simulation-card-top h3 {
+  margin: 0.35rem 0 0;
+}
+
+.simulation-card-label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.simulation-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  color: var(--muted-strong);
+  font-size: 0.92rem;
+}
+
+.simulation-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(124, 92, 255, 0.12);
+  border: 1px solid rgba(124, 92, 255, 0.16);
+  color: var(--accent-strong);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.simulation-card-summary {
+  margin: 0;
+}
+
+.project-empty-simulations {
+  min-height: 6rem;
+}
+
+.project-new-simulation-heading {
+  margin-bottom: 0.75rem;
+}
+
+.project-new-simulation-heading h2 {
+  margin: 0.8rem 0 0;
+  font-size: clamp(2.2rem, 4vw, 3.25rem);
 }
 
 .profile-panel-header {
@@ -851,7 +951,7 @@ html[data-theme='dark'] .empty-projects {
   place-items: center;
   text-align: center;
   gap: 0.85rem;
-  min-height: 22rem;
+  min-height: 15rem;
   margin-top: 1.5rem;
   padding: 2rem;
   border-radius: 1.6rem;
@@ -1453,7 +1553,8 @@ html[data-theme='dark'] .empty-projects {
   }
 
   .project-card-actions,
-  .modal-actions {
+  .modal-actions,
+  .simulation-card-top {
     flex-direction: column;
     align-items: stretch;
   }

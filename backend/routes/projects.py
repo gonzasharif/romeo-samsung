@@ -218,6 +218,7 @@ def create_simulation(project_id: str, payload: SimulationCreate, user: User = D
     
     timestamp = now_utc().isoformat()
     run_data = {
+        "id": new_id("run"),
         "project_id": project_id,
         "scenario_name": payload.scenario_name,
         "provider": payload.provider,
