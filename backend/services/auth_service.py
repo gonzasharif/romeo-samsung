@@ -26,13 +26,25 @@ def get_authenticated_user(credentials: HTTPAuthorizationCredentials = Depends(s
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         
         user_id = user_response.user.id
-        # Normally we'd fetch from DB. Since it's still mocked in memory:
-        # We need to make sure the user exists or at least mock it
+        
         user = USERS.get(user_id)
         if not user:
-            # For this MVP, if it exists in auth but not memory, we can create a mock or return 404
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found in memory DB")
+            from models.domain import CompanyProfile
+            from utils.common import now_utc
+            meta = user_response.user.user_metadata or {}
+            user = User(
+                id=user_id,
+                full_name=meta.get("full_name", "Usuario"),
+                email=user_response.user.email or "",
+                company=CompanyProfile(name=meta.get("company_name", "Empresa")),
+                created_at=now_utc(),
+                updated_at=now_utc()
+            )
+            USERS[user_id] = user
+            
         return user
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 

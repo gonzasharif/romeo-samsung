@@ -114,7 +114,7 @@ export const messages = {
     },
     profile: {
       workspace: 'Workspace',
-      helloUser: 'Hola, Ada Founder',
+      helloUser: (name: string) => `Hola, ${name}`,
       projectsKicker: 'Tus proyectos',
       projectsTitle: 'Espacio de validación',
       projectsCount: (count: number) => `${count} proyectos`,
@@ -234,7 +234,7 @@ export const messages = {
     },
     profile: {
       workspace: 'Workspace',
-      helloUser: 'Hi, Ada Founder',
+      helloUser: (name: string) => `Hi, ${name}`,
       projectsKicker: 'Your projects',
       projectsTitle: 'Validation space',
       projectsCount: (count: number) => `${count} projects`,
