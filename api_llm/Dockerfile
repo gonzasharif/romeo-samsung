@@ -20,7 +20,7 @@ RUN pip3 install --no-cache-dir llama-cpp-python fastapi uvicorn[standard] pydan
 WORKDIR /app
 
 # Exponer el puerto de la API
-EXPOSE 8000
+EXPOSE 8080
 
 # Al iniciar, levantar el server de Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

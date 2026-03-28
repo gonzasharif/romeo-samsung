@@ -142,6 +142,10 @@ La forma más rápida de levantar ambos servicios (Frontend y Backend) en modo d
 En la terminal, dentro de la raíz del proyecto, ejecuta:
 ```bash
 docker-compose up --build
+
+o
+
+docker compose up --build
 ```
 
 Una vez que termine de descargar las imágenes y levantar los contenedores, tus servicios estarán disponibles en:

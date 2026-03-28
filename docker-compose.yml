@@ -25,3 +25,21 @@ services:
       - ./backend:/app # Mapea los archivos locales al contenedor para hot reload
     environment:
       - PYTHONUNBUFFERED=1 # Asegura que los logs de Python se envíen stdout en tiempo real
+
+  api:
+    build: 
+      context: ./api_llm
+      dockerfile: Dockerfile
+    image: llama-api-gpu
+    container_name: llama_api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api_llm:/app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

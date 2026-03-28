@@ -8,7 +8,7 @@ import re
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from schemas.responses import ConsumerProfile
 
-BASE_URL = "http://localhost:8000/api"
+BASE_URL = "http://localhost:8080/api"
 
 def test_get_model():
     """Prueba el endpoint /get_model y retorna la lista de modelos disponibles."""
