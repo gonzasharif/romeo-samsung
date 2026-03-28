@@ -1,6 +1,10 @@
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from models.db import USERS, PROJECTS
 from models.domain import User, Project
+from utils.supabase_client import supabase
+
+security = HTTPBearer()
 
 def get_user_or_404(user_id: str) -> User:
     user = USERS.get(user_id)
@@ -14,8 +18,23 @@ def get_project_or_404(project_id: str) -> Project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
     return project
 
-def get_authenticated_user(x_user_id: str = Header(..., alias="X-User-Id")) -> User:
-    return get_user_or_404(x_user_id)
+def get_authenticated_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
+    token = credentials.credentials
+    try:
+        user_response = supabase.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        
+        user_id = user_response.user.id
+        # Normally we'd fetch from DB. Since it's still mocked in memory:
+        # We need to make sure the user exists or at least mock it
+        user = USERS.get(user_id)
+        if not user:
+            # For this MVP, if it exists in auth but not memory, we can create a mock or return 404
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found in memory DB")
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 def assert_project_owner(project: Project, user: User) -> None:
     if project.owner_id != user.id:

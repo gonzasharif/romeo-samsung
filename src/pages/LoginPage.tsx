@@ -1,6 +1,7 @@
 import AuthLayout from './AuthLayout'
 import type { RoutePath } from '../App'
 import type { Copy } from '../i18n'
+import { login } from '../services/api'
 
 type LoginPageProps = {
   onNavigate: (path: RoutePath) => void
@@ -12,9 +13,24 @@ function LoginPage({ onNavigate, copy }: LoginPageProps) {
     <AuthLayout mode="login" onNavigate={onNavigate} copy={copy}>
       <form
         className="auth-form"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault()
-          onNavigate('/profile')
+          const formData = new FormData(event.currentTarget)
+          const data = Object.fromEntries(formData.entries())
+          
+          try {
+            const responseData = await login({
+              email: data.email,
+              password: data.password,
+            })
+            if (responseData.session) {
+                localStorage.setItem('session', JSON.stringify(responseData.session))
+            }
+            onNavigate('/profile')
+          } catch (error: any) {
+            console.error(error)
+            alert('Error: ' + error.message)
+          }
         }}
       >
         <label className="field">

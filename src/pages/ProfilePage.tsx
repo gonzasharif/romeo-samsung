@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { RoutePath } from '../App'
 import type { Copy } from '../i18n'
+import { getProjects } from '../services/api'
 
 type ProfilePageProps = {
   onNavigate: (path: RoutePath) => void
@@ -8,9 +10,30 @@ type ProfilePageProps = {
   topControls: ReactNode
 }
 
-const projects: { id: string; name: string; summary: string }[] = []
-
 function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
+  const [projects, setProjects] = useState<any[]>([])
+  
+  useEffect(() => {
+    const sessionStr = localStorage.getItem('session')
+    if (!sessionStr) {
+      onNavigate('/login')
+      return
+    }
+    
+    getProjects()
+      .then(data => {
+        if (Array.isArray(data)) {
+          setProjects(data)
+        }
+      })
+      .catch(err => {
+        console.error(err)
+        if (err.message === 'Unauthorized' || err.message === 'Not authenticated') {
+          onNavigate('/login')
+        }
+      })
+  }, [onNavigate])
+
   const hasProjects = projects.length > 0
 
   return (
@@ -22,10 +45,13 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
         </div>
         <div className="profile-actions">
         
-          <button type="button" className="secondary-button" onClick={() => onNavigate('/')}>
+          <button type="button" className="secondary-button" onClick={() => {
+            localStorage.removeItem('session')
+            onNavigate('/')
+          }}>
             {copy.common.backHome}
           </button>
-          <button type="button" className="primary-cta profile-cta">
+          <button type="button" className="primary-cta profile-cta" onClick={() => alert('Pronto: Flujo para crear proyecto')}>
             {copy.common.createProject}
           </button>
         </div>
@@ -47,7 +73,7 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
             {projects.map((project) => (
               <article key={project.id} className="project-card">
                 <h3>{project.name}</h3>
-                <p>{project.summary}</p>
+                <p>{project.context?.company_summary || 'Sin descripción'}</p>
               </article>
             ))}
           </div>

@@ -8,6 +8,10 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=8)
     company: CompanyProfile
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 class UserUpdate(BaseModel):
     full_name: str | None = None
     email: str | None = None

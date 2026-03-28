@@ -1,6 +1,7 @@
 import AuthLayout from './AuthLayout'
 import type { RoutePath } from '../App'
 import type { Copy } from '../i18n'
+import { signup } from '../services/api'
 
 type SignupPageProps = {
   onNavigate: (path: RoutePath) => void
@@ -12,9 +13,31 @@ function SignupPage({ onNavigate, copy }: SignupPageProps) {
     <AuthLayout mode="signup" onNavigate={onNavigate} copy={copy}>
       <form
         className="auth-form signup-form"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault()
-          onNavigate('/profile')
+          const formData = new FormData(event.currentTarget)
+          const data = Object.fromEntries(formData.entries())
+          
+          if (data.password !== data.confirm_password) {
+            alert('Las contraseñas no coinciden')
+            return
+          }
+
+          try {
+            const responseData = await signup({
+              full_name: data.full_name,
+              email: data.email,
+              password: data.password,
+              company: { name: data.company_name },
+            })
+            if (responseData.session) {
+                localStorage.setItem('session', JSON.stringify(responseData.session))
+            }
+            onNavigate('/profile')
+          } catch (error: any) {
+            console.error(error)
+            alert('Error: ' + error.message)
+          }
         }}
       >
         <div className="field-grid">
