@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 class CompanyProfile(BaseModel):
@@ -36,21 +36,21 @@ class AgentProfile(BaseModel):
     objections: list[str] = Field(default_factory=list)
 
 class ProjectContext(BaseModel):
-    company_summary: str
-    product_name: str
-    product_description: str
-    target_audience: str
+    company_summary: str | None = None
+    product_name: str | None = None
+    product_description: str | None = None
+    target_audience: str | None = None
     pricing_notes: str | None = None
     market_context: str | None = None
     category: str | None = None
 
 class StatsResponse(BaseModel):
-    demand_score: float = Field(ge=0, le=100)
-    willingness_to_pay_score: float = Field(ge=0, le=100)
-    clarity_score: float = Field(ge=0, le=100)
-    objection_distribution: dict[str, int] = Field(default_factory=dict)
-    sentiment_distribution: dict[str, int] = Field(default_factory=dict)
-
+    demand_score: Optional[float] = Field(None, ge=0, le=100)
+    willingness_to_pay_score: Optional[float] = Field(None, ge=0, le=100)
+    clarity_score: Optional[float] = Field(None, ge=0, le=100)
+    
+    objection_distribution: Optional[dict[str, int]] = Field(None)
+    sentiment_distribution: Optional[dict[str, int]] = Field(None)
 class SimulationRun(BaseModel):
     id: str
     project_id: str
@@ -70,10 +70,10 @@ class Project(BaseModel):
     id: str
     owner_id: str
     name: str
-    context: ProjectContext
+    context: ProjectContext | None = None
     target_models: list[TargetModel] = Field(default_factory=list)
     agents: list[AgentProfile] = Field(default_factory=list)
-    stats: StatsResponse
+    stats: StatsResponse | None = None
     simulations: list[SimulationRun] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

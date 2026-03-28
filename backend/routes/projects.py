@@ -127,11 +127,23 @@ def delete_project_model(project_id: str, model_id: str, user: User = Depends(ge
 # --- Agents Sub-resources ---
 
 @router.get("/projects/{project_id}/agents", response_model=list[AgentProfile])
-def list_project_agents(project_id: str, user: User = Depends(get_authenticated_user)) -> list[AgentProfile]:
+def list_project_agents(project_id: str, user: User = Depends(get_authenticated_user)):
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    resp = supabase.table("agent_profiles").select("*").eq("project_id", project_id).execute()
-    return [AgentProfile(**row) for row in resp.data]
+
+    resp = (
+        supabase.table("agent_profiles")
+        .select("*, target_models!inner(project_id)")
+        .eq("target_models.project_id", project_id)
+        .execute()
+    )
+
+    agents = []
+    for row in resp.data:
+        row.pop("target_models", None) 
+        agents.append(AgentProfile(**row))
+
+    return agents
 
 @router.post("/projects/{project_id}/agents", response_model=AgentProfile, status_code=status.HTTP_201_CREATED)
 def add_project_agent(project_id: str, payload: AgentCreate, user: User = Depends(get_authenticated_user)) -> AgentProfile:
