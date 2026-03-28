@@ -12,6 +12,7 @@ type ProfilePageProps = {
 
 function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
   const [projects, setProjects] = useState<any[]>([])
+  const [userName, setUserName] = useState<string>('Founder')
   
   useEffect(() => {
     const sessionStr = localStorage.getItem('session')
@@ -19,6 +20,12 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
       onNavigate('/login')
       return
     }
+    
+    try {
+        const session = JSON.parse(sessionStr)
+        const name = session.user?.user_metadata?.full_name || 'Founder'
+        setUserName(name)
+    } catch(e) {}
     
     getProjects()
       .then(data => {
@@ -41,7 +48,7 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
       <header className="profile-topbar">
         <div>
           <p className="section-tag">{copy.profile.workspace}</p>
-          <h1 className="profile-title">{copy.profile.helloUser}</h1>
+          <h1 className="profile-title">{copy.profile.helloUser(userName)}</h1>
         </div>
         <div className="profile-actions">
         

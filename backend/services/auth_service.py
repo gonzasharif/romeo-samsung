@@ -47,6 +47,25 @@ def get_authenticated_user(credentials: HTTPAuthorizationCredentials = Depends(s
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         
         user_id = user_response.user.id
+        
+        user = USERS.get(user_id)
+        if not user:
+            from models.domain import CompanyProfile
+            from utils.common import now_utc
+            meta = user_response.user.user_metadata or {}
+            user = User(
+                id=user_id,
+                full_name=meta.get("full_name", "Usuario"),
+                email=user_response.user.email or "",
+                company=CompanyProfile(name=meta.get("company_name", "Empresa")),
+                created_at=now_utc(),
+                updated_at=now_utc()
+            )
+            USERS[user_id] = user
+            
+        return user
+    except HTTPException:
+        raise
         return get_user_or_404(user_id)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
