@@ -1,73 +1,279 @@
-# React + TypeScript + Vite
+# Romeo Samsung
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Plataforma para validar ideas de negocio antes de invertir tiempo y dinero en construirlas. El producto combina una landing de captación con un backend preparado para gestionar usuarios, proyectos, perfiles de agentes de IA y corridas de simulación tipo focus group.
 
-Currently, two official plugins are available:
+## Qué resuelve
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Muchos equipos construyen primero y validan después. Este proyecto apunta a invertir ese orden.
 
-## React Compiler
+La propuesta es simple:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- el usuario describe su empresa, producto y contexto de mercado
+- el sistema genera perfiles sintéticos de potenciales clientes
+- el usuario corre simulaciones con IA para testear interés, objeciones y disposición a pagar
+- el frontend muestra señales agregadas de demanda para facilitar la toma de decisiones
 
-## Expanding the ESLint configuration
+## Estado actual
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Hoy el repositorio incluye:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- una landing page en React + Vite con foco comercial
+- una API en Python con FastAPI para usuarios, proyectos, agentes y simulaciones
+- almacenamiento en memoria para iterar rápido sobre el flujo de producto
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Todavía no incluye:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- autenticación real
+- base de datos persistente
+- integración efectiva con OpenAI, Gemini o Claude
+- paneles de visualización conectados al backend
+
+## Stack
+
+### Frontend
+
+- React 19
+- TypeScript
+- Vite
+- CSS custom
+
+### Backend
+
+- Python 3
+- FastAPI
+- Pydantic
+- Uvicorn
+
+## Estructura del proyecto
+
+```text
+.
+├── backend/
+│   ├── main.py
+│   └── requirements.txt
+├── src/
+│   ├── App.tsx
+│   ├── App.css
+│   ├── index.css
+│   └── main.tsx
+├── package.json
+└── README.md
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Flujo de producto
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. El usuario se registra en la plataforma.
+2. Crea un proyecto con el contexto de su empresa y su producto.
+3. El sistema genera perfiles de agentes de IA para ese proyecto.
+4. El usuario puede agregar perfiles manuales si detecta segmentos faltantes.
+5. Se dispara una simulación para evaluar demanda y objeciones.
+6. El frontend consume métricas agregadas e historial de corridas.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Endpoints disponibles
+
+### Usuarios
+
+- `POST /users`
+  Registra un nuevo cliente.
+- `GET /users/{id}`
+  Devuelve el perfil del cliente.
+- `PUT /users/{id}`
+  Reemplaza los datos editables del cliente.
+- `PATCH /users/{id}`
+  Actualiza parcialmente datos de empresa o facturación.
+
+### Proyectos
+
+- `GET /projects`
+  Lista los proyectos del usuario autenticado.
+- `POST /projects`
+  Crea un proyecto nuevo con el formulario inicial.
+- `GET /projects/{id}`
+  Devuelve el detalle completo del proyecto.
+- `PUT /projects/{id}`
+  Actualiza el nombre o contexto del proyecto.
+
+### Modelos de agentes
+
+- `GET /projects/{id}/models`
+  Lista los perfiles de agentes generados para el proyecto.
+- `POST /projects/{id}/models`
+  Agrega un agente manual.
+
+### Métricas
+
+- `GET /projects/{id}/stats`
+  Devuelve métricas agregadas listas para graficar.
+
+### Simulaciones
+
+- `GET /projects/{id}/simulations`
+  Lista el historial de corridas del proyecto.
+- `POST /projects/{id}/simulations`
+  Dispara una nueva simulación.
+- `GET /projects/{id}/runs`
+  Alias de historial de corridas.
+- `POST /projects/{id}/runs`
+  Alias para disparar una simulación.
+
+### Salud del servicio
+
+- `GET /health`
+  Healthcheck simple del backend.
+
+## Autenticación actual
+
+Por ahora el backend usa una autenticación mínima basada en header:
+
+```http
+X-User-Id: user_xxxxx
 ```
+
+No hay login real todavía. Primero se crea un usuario con `POST /users` y luego ese `id` se envía en el header para listar o crear proyectos.
+
+## Cómo correr el frontend
+
+### Requisitos
+
+- Node.js 20 o superior
+- npm
+
+### Instalación
+
+```bash
+npm install
+```
+
+### Desarrollo
+
+```bash
+npm run dev
+```
+
+### Build de producción
+
+```bash
+npm run build
+```
+
+### Preview local
+
+```bash
+npm run preview
+```
+
+## Cómo correr el backend
+
+### Requisitos
+
+- Python 3.11 o superior
+- pip
+
+### Instalación
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+### Desarrollo
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+Una vez levantado, la documentación interactiva queda disponible en:
+
+- `http://127.0.0.1:8000/docs`
+- `http://127.0.0.1:8000/redoc`
+
+## Ejemplo de uso básico
+
+### 1. Crear usuario
+
+```bash
+curl -X POST http://127.0.0.1:8000/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "full_name": "Ada Founder",
+    "email": "ada@example.com",
+    "password": "supersecreto",
+    "company": {
+      "name": "Ada Labs",
+      "industry": "SaaS",
+      "description": "Herramientas para validar ideas"
+    }
+  }'
+```
+
+### 2. Crear proyecto
+
+Reemplazá `user_xxxxx` por el `id` devuelto en el paso anterior.
+
+```bash
+curl -X POST http://127.0.0.1:8000/projects \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user_xxxxx" \
+  -d '{
+    "name": "Focus group para app de viandas",
+    "context": {
+      "company_summary": "Startup de alimentación saludable",
+      "product_name": "LunchFlow",
+      "product_description": "Suscripción de viandas listas para oficina",
+      "target_audience": "Profesionales con poco tiempo",
+      "pricing_notes": "Plan mensual"
+    }
+  }'
+```
+
+### 3. Correr simulación
+
+Reemplazá `proj_xxxxx` por el `id` del proyecto creado.
+
+```bash
+curl -X POST http://127.0.0.1:8000/projects/proj_xxxxx/simulations \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: user_xxxxx" \
+  -d '{
+    "scenario_name": "Precio base",
+    "provider": "mock",
+    "questions": [
+      "¿Comprarías este producto?",
+      "¿Qué te genera dudas?"
+    ]
+  }'
+```
+
+## Scripts útiles
+
+### Frontend
+
+- `npm run dev`: levanta Vite en modo desarrollo
+- `npm run build`: compila TypeScript y genera build de producción
+- `npm run lint`: ejecuta ESLint
+- `npm run preview`: sirve el build localmente
+
+### Backend
+
+- `uvicorn backend.main:app --reload`: levanta la API en desarrollo
+
+## Decisiones de implementación
+
+- El backend usa almacenamiento en memoria para facilitar prototipado rápido.
+- Los agentes de IA iniciales se generan automáticamente al crear un proyecto.
+- Las métricas están mockeadas con estructura realista para desacoplar frontend y backend.
+- El endpoint de simulaciones ya está modelado para integrar proveedores reales más adelante.
+
+## Próximos pasos recomendados
+
+- conectar la landing con registro real
+- persistir usuarios y proyectos en SQLite o Postgres
+- agregar autenticación y autorización reales
+- disparar simulaciones asíncronas con cola de trabajos
+- integrar proveedores LLM reales y almacenar resultados por corrida
+- construir dashboard de análisis y comparación entre escenarios
+
+## Nota
+
+Este repositorio está orientado a validar rápido el flujo de producto. La implementación actual privilegia claridad y velocidad de iteración por encima de robustez productiva.
