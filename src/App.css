@@ -486,6 +486,10 @@
   backdrop-filter: blur(24px);
 }
 
+.auth-panel-inner .section-tag {
+  margin-bottom: 0.85rem;
+}
+
 .back-home {
   display: inline-flex;
   align-items: center;
