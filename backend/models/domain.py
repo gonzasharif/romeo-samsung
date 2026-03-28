@@ -8,18 +8,11 @@ class CompanyProfile(BaseModel):
     industry: str | None = None
     description: str | None = None
 
-class BillingProfile(BaseModel):
-    contact_name: str | None = None
-    email: str | None = None
-    tax_id: str | None = None
-    address: str | None = None
-
 class User(BaseModel):
     id: str
     full_name: str
     email: str
     company: CompanyProfile
-    billing: BillingProfile | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -30,7 +23,10 @@ class AgentProfile(BaseModel):
     segment: str
     motivations: list[str] = Field(default_factory=list)
     objections: list[str] = Field(default_factory=list)
-    source: Literal["system", "manual"] = "system"
+    attitude: Literal[0, 1, 2, 3] | None = None
+    tech_savviness: Literal[0, 1, 2] | None = None
+    income_level: Literal[0, 1, 2] | None = None
+    geography: str | None = None
 
 class ProjectContext(BaseModel):
     company_summary: str
@@ -52,7 +48,7 @@ class SimulationRun(BaseModel):
     project_id: str
     scenario_name: str
     provider: str
-    status: Literal["queued", "running", "completed"]
+    status: Literal[0, 1, 2] # 0: queued, 1: running, 2: completed
     questions: list[str]
     overrides: dict[str, str | int | float | bool]
     models_snapshot: list[AgentProfile]

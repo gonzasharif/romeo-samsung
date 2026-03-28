@@ -15,7 +15,6 @@ def create_user(payload: UserCreate) -> User:
         full_name=payload.full_name,
         email=payload.email,
         company=payload.company,
-        billing=payload.billing,
         created_at=timestamp,
         updated_at=timestamp,
     )

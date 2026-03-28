@@ -53,7 +53,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"full_name\": \"Prueba Usuario\",\n  \"email\": \"test@test.com\",\n  \"password\": \"secreto123\",\n  \"company\": {\n    \"name\": \"Samsung\",\n    \"website\": \"https://samsung.com\",\n    \"industry\": \"Tecnología\",\n    \"description\": \"Electrónicos\"\n  },\n  \"billing\": {\n    \"contact_name\": \"Facuración Sr.\",\n    \"email\": \"billing@samsung.com\"\n  }\n}"
+              "raw": "{\n  \"full_name\": \"Prueba Usuario\",\n  \"email\": \"test@test.com\",\n  \"password\": \"secreto123\",\n  \"company\": {\n    \"name\": \"Samsung\",\n    \"website\": \"https://samsung.com\",\n    \"industry\": \"Tecnología\",\n    \"description\": \"Electrónicos\"\n  }\n}"
             },
             "url": {
               "raw": "{{base_url}}/users",
@@ -238,7 +238,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Usuario Estudiante\",\n  \"age_range\": \"18-24\",\n  \"segment\": \"Universitarios\",\n  \"motivations\": [ \"Busca bajo precio y diseño moderno\" ],\n  \"objections\": [ \"Poco presupuesto disponible\" ]\n}"
+              "raw": "{\n  \"name\": \"Usuario Estudiante\",\n  \"age_range\": \"18-24\",\n  \"segment\": \"Universitarios\",\n  \"motivations\": [ \"Busca bajo precio y diseño moderno\" ],\n  \"objections\": [ \"Poco presupuesto disponible\" ],\n  \"attitude\": \"Crítico\",\n  \"tech_savviness\": \"Avanzado\",\n  \"income_level\": \"Bajo\",\n  \"geography\": \"Latinoamérica\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/projects/{{project_id}}/models",
