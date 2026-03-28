@@ -12,18 +12,10 @@ router = APIRouter()
 def list_projects(user: User = Depends(get_authenticated_user)) -> list[Project]:
     proj_resp = supabase.table("projects").select("*").eq("owner_id", user.id).execute()
     projects_list = []
-    
-    for pdata in proj_resp.data:
-        pid = pdata["id"]
-        tm_resp = supabase.table("target_models").select("*").eq("project_id", pid).execute()
-        ag_resp = supabase.table("agents").select("*").eq("project_id", pid).execute()
-        sim_resp = supabase.table("simulations").select("*").eq("project_id", pid).execute()
-        
-        pdata["target_models"] = tm_resp.data
-        pdata["agents"] = ag_resp.data
-        pdata["simulations"] = sim_resp.data
+
+    for pdata in proj_resp.data or []:
         projects_list.append(Project(**pdata))
-        
+
     return projects_list
 
 @router.post("/projects", response_model=Project, status_code=status.HTTP_201_CREATED)
@@ -49,7 +41,7 @@ def create_project(
     if target_models:
         supabase.table("target_models").insert([m.model_dump() for m in target_models]).execute()
     if agents:
-        supabase.table("agents").insert([a.model_dump() for a in agents]).execute()
+        supabase.table("agent_profiles").insert([a.model_dump() for a in agents]).execute()
         
     return get_project_or_404(project_id)
 
@@ -83,9 +75,9 @@ def delete_project(
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     
-    supabase.table("simulations").delete().eq("project_id", project_id).execute()
-    supabase.table("agents").delete().eq("project_id", project_id).execute()
-    supabase.table("target_models").delete().eq("project_id", project_id).execute()
+    #supabase.table("simulations").delete().eq("project_id", project_id).execute()
+    #supabase.table("agent_profiles").delete().eq("project_id", project_id).execute()
+    #supabase.table("target_models").delete().eq("project_id", project_id).execute()
     supabase.table("projects").delete().eq("id", project_id).execute()
     
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -136,7 +128,7 @@ def delete_project_model(project_id: str, model_id: str, user: User = Depends(ge
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     
-    supabase.table("agents").delete().eq("model_id", model_id).eq("project_id", project_id).execute()
+    supabase.table("agent_profiles").delete().eq("model_id", model_id).eq("project_id", project_id).execute()
     supabase.table("target_models").delete().eq("id", model_id).eq("project_id", project_id).execute()
     
     supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
@@ -148,7 +140,7 @@ def delete_project_model(project_id: str, model_id: str, user: User = Depends(ge
 def list_project_agents(project_id: str, user: User = Depends(get_authenticated_user)) -> list[AgentProfile]:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    resp = supabase.table("agents").select("*").eq("project_id", project_id).execute()
+    resp = supabase.table("agent_profiles").select("*").eq("project_id", project_id).execute()
     return [AgentProfile(**row) for row in resp.data]
 
 @router.post("/projects/{project_id}/agents", response_model=AgentProfile, status_code=status.HTTP_201_CREATED)
@@ -165,7 +157,7 @@ def add_project_agent(project_id: str, payload: AgentCreate, user: User = Depend
          "project_id": project_id,
          **payload.model_dump()
     }
-    resp = supabase.table("agents").insert(agent_data).execute()
+    resp = supabase.table("agent_profiles").insert(agent_data).execute()
     supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
     return AgentProfile(**resp.data[0])
 
@@ -181,11 +173,11 @@ def update_project_agent(project_id: str, agent_id: str, payload: AgentUpdate, u
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="model_id no fue encontrado en este proyecto")
             
     if not update_data:
-        resp = supabase.table("agents").select("*").eq("id", agent_id).eq("project_id", project_id).execute()
+        resp = supabase.table("agent_profiles").select("*").eq("id", agent_id).eq("project_id", project_id).execute()
         if not resp.data: raise HTTPException(status_code=404, detail="Agent not found")
         return AgentProfile(**resp.data[0])
         
-    resp = supabase.table("agents").update(update_data).eq("id", agent_id).eq("project_id", project_id).execute()
+    resp = supabase.table("agent_profiles").update(update_data).eq("id", agent_id).eq("project_id", project_id).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Agent not found")
         
@@ -197,7 +189,7 @@ def delete_project_agent(project_id: str, agent_id: str, user: User = Depends(ge
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     
-    supabase.table("agents").delete().eq("id", agent_id).eq("project_id", project_id).execute()
+    supabase.table("agent_profiles").delete().eq("id", agent_id).eq("project_id", project_id).execute()
     supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

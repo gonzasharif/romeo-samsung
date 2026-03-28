@@ -9,12 +9,12 @@ import type { Locale } from './i18n'
 import type { Copy } from './i18n'
 import './App.css'
 
-export type RoutePath = '/' | '/login' | '/signup' | '/profile' | '/project'
+export type RoutePath = '/' | '/login' | '/signup' | '/profile' | (string & {})
 type ThemeMode = 'light' | 'dark'
 
 function normalizePath(pathname: string): RoutePath {
   if (pathname === '/login') return '/login'
-  if (pathname === '/project') return '/project'
+  if (pathname.startsWith('/project/')) return pathname
   if (pathname === '/profile') return '/profile'
   if (pathname === '/signup') return '/signup'
   return '/'
@@ -42,7 +42,6 @@ function App() {
   const [route, setRoute] = useState<RoutePath>(() => normalizePath(window.location.pathname))
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme)
   const [locale, setLocale] = useState<Locale>(getInitialLocale)
-  const [activeProjectName, setActiveProjectName] = useState<string>('New Project')
 
   useEffect(() => {
     const onPopState = () => setRoute(normalizePath(window.location.pathname))
@@ -62,8 +61,8 @@ function App() {
   const navigate = (path: RoutePath) => {
     if (path === route) return
     window.history.pushState({}, '', path)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
     setRoute(path)
+    window.scrollTo({ top: 0, behavior: 'auto' })
   }
 
   const toggleTheme = () => {
@@ -103,24 +102,22 @@ function App() {
         <ProfilePage
           onNavigate={navigate}
           copy={copy}
+          locale={locale}
           topControls={topControls}
-          onCreateProject={(projectName) => {
-            setActiveProjectName(projectName)
-            navigate('/project')
-          }}
         />
       </main>
     )
   }
 
-  if (route === '/project') {
+  if (route.startsWith('/project/')) {
+    const projectId = route.replace('/project/', '')
     return (
       <main className="landing-shell profile-shell-wrapper">
         <ProjectPage
+          projectId={projectId}
           onNavigate={navigate}
           copy={copy}
           topControls={topControls}
-          projectName={activeProjectName}
         />
       </main>
     )
