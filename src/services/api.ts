@@ -59,3 +59,21 @@ export async function getProjects() {
   const data = await res.json()
   return data
 }
+
+export async function logout() {
+  const sessionStr = localStorage.getItem('session')
+  if (sessionStr) {
+    const session = JSON.parse(sessionStr)
+    try {
+      await fetch(`${API_BASE_URL}/logout`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
+    } catch (e) {
+      console.error('Logout error', e)
+    }
+  }
+  localStorage.removeItem('session')
+}

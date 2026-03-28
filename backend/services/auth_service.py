@@ -17,10 +17,21 @@ def get_user_or_404(user_id: str) -> User:
             company_data = json.loads(data["company"])
         else:
             company_data = data.get("company") or {}
-    except json.JSONDecodeError:
-        company_data = {"name": data.get("company")}
+    except (ValueError, TypeError):
+        company_data = {"name": data.get("company") or "Empresa"}
+
+    if not isinstance(company_data, dict):
+        company_data = {"name": str(company_data)}
+    if "name" not in company_data:
+        company_data["name"] = "Empresa"
 
     data["company"] = company_data
+    
+    # Aseguramos que los timestamps nunca falten
+    from utils.common import now_utc
+    data["created_at"] = data.get("created_at") or now_utc().isoformat()
+    data["updated_at"] = data.get("updated_at") or now_utc().isoformat()
+    data["full_name"] = data.get("full_name") or "Usuario"
     return User(**data)
 
 def get_project_or_404(project_id: str) -> Project:
@@ -46,27 +57,9 @@ def get_authenticated_user(credentials: HTTPAuthorizationCredentials = Depends(s
         if not user_response or not user_response.user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         
-        user_id = user_response.user.id
-        
-        user = USERS.get(user_id)
-        if not user:
-            from models.domain import CompanyProfile
-            from utils.common import now_utc
-            meta = user_response.user.user_metadata or {}
-            user = User(
-                id=user_id,
-                full_name=meta.get("full_name", "Usuario"),
-                email=user_response.user.email or "",
-                company=CompanyProfile(name=meta.get("company_name", "Empresa")),
-                created_at=now_utc(),
-                updated_at=now_utc()
-            )
-            USERS[user_id] = user
-            
-        return user
+        return get_user_or_404(user_response.user.id)
     except HTTPException:
         raise
-        return get_user_or_404(user_id)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 

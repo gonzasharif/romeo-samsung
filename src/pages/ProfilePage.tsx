@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { RoutePath } from '../App'
 import type { Copy } from '../i18n'
-import { getProjects } from '../services/api'
+import { getProjects, logout } from '../services/api'
 
 type ProfilePageProps = {
   onNavigate: (path: RoutePath) => void
@@ -52,11 +52,11 @@ function ProfilePage({ onNavigate, copy, topControls }: ProfilePageProps) {
         </div>
         <div className="profile-actions">
         
-          <button type="button" className="secondary-button" onClick={() => {
-            localStorage.removeItem('session')
+          <button type="button" className="secondary-button" onClick={async () => {
+            await logout()
             onNavigate('/')
           }}>
-            {copy.common.backHome}
+            {copy.common.logout}
           </button>
           <button type="button" className="primary-cta profile-cta" onClick={() => alert('Pronto: Flujo para crear proyecto')}>
             {copy.common.createProject}
