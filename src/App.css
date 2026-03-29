@@ -2001,3 +2001,74 @@ html[data-theme='dark'] .agent-tag {
 html[data-theme='dark'] .icon-button:hover {
   background: rgba(255, 255, 255, 0.05);
 }
+
+/* Summary Content Styles */
+.summary-panel {
+  padding: clamp(1.8rem, 4vw, 2.5rem);
+}
+
+.summary-content {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  color: var(--text-h);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.summary-h2 {
+  font-size: 1.6rem;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--text-h);
+}
+
+.summary-h3 {
+  font-size: 1.3rem;
+  margin: 1.2rem 0 0.4rem;
+  color: var(--accent-strong);
+}
+
+.summary-h4 {
+  font-size: 1.15rem;
+  margin: 1rem 0 0.3rem;
+  color: var(--text-h);
+}
+
+.summary-p {
+  margin: 0;
+}
+
+.summary-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.summary-list li {
+  position: relative;
+  list-style-type: disc;
+}
+
+.summary-strong {
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.summary-em {
+  font-style: italic;
+  color: var(--muted-strong);
+}
+
+.summary-code {
+  background: rgba(124, 92, 255, 0.1);
+  color: var(--accent-strong);
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+html[data-theme='dark'] .summary-code {
+  background: rgba(124, 92, 255, 0.2);
+}

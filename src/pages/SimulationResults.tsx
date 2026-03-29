@@ -6,9 +6,7 @@ import {
   getProject,
   getProjectModels,
   getProjectSimulations,
-  getProjectStats,
 } from '../services/api'
-import type { SimulationResultsData } from '../types/simulationResults'
 import { mapTargetModelToUserPersona, type TargetModelApi } from '../utils/userPersonaMapper'
 
 type SimulationResultsProps = {
@@ -18,31 +16,50 @@ type SimulationResultsProps = {
   onNavigate: (path: RoutePath) => void
 }
 
-function MetricBar({
-  label,
-  value,
-}: {
-  label: string
-  value: number | null | undefined
-}) {
-  const normalizedValue = typeof value === 'number' ? value : 0
+function parseInline(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="summary-strong">{part.slice(2, -2)}</strong>
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={i} className="summary-em">{part.slice(1, -1)}</em>
+    }
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={i} className="summary-code">{part.slice(1, -1)}</code>
+    }
+    return <span key={i}>{part}</span>
+  })
+}
 
-  return (
-    <div className="results-metric-bar">
-      <div className="results-metric-bar-top">
-        <span>{label}</span>
-        <strong>{typeof value === 'number' ? `${value}%` : '—'}</strong>
-      </div>
-      <div className="results-metric-track">
-        <i style={{ width: `${normalizedValue}%` }} />
-      </div>
-    </div>
-  )
+function parseMarkdownToElements(text: string) {
+  if (!text) return null
+  const blocks = text.split('\n\n').filter(b => b.trim())
+  
+  return blocks.map((block, i) => {
+    if (block.startsWith('- ') || block.startsWith('* ')) {
+      const items = block.split('\n').filter(line => line.trim().startsWith('- ') || line.trim().startsWith('* '))
+      return (
+        <ul key={i} className="summary-list">
+          {items.map((item, j) => {
+            const content = item.replace(/^[-*]\s+/, '')
+            return <li key={j}>{parseInline(content)}</li>
+          })}
+        </ul>
+      )
+    }
+    
+    if (block.startsWith('### ')) return <h4 key={i} className="summary-h4">{parseInline(block.slice(4))}</h4>
+    if (block.startsWith('## ')) return <h3 key={i} className="summary-h3">{parseInline(block.slice(3))}</h3>
+    if (block.startsWith('# ')) return <h2 key={i} className="summary-h2">{parseInline(block.slice(2))}</h2>
+    
+    return <p key={i} className="summary-p">{parseInline(block)}</p>
+  })
 }
 
 function SimulationResults({ projectId, simulationId, copy, onNavigate }: SimulationResultsProps) {
   const [isLoading, setIsLoading] = useState(true)
-  const [resultsData, setResultsData] = useState<SimulationResultsData | null>(null)
+  const [resultsData, setResultsData] = useState<any>(null)
   const [personas, setPersonas] = useState<any[]>([])
 
   useEffect(() => {
@@ -50,11 +67,10 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
 
     const loadResults = async () => {
       try {
-        const [projectData, simulationsData, modelsData, statsData] = await Promise.all([
+        const [projectData, simulationsData, modelsData] = await Promise.all([
           getProject(projectId),
           getProjectSimulations(projectId),
-          getProjectModels(projectId),
-          getProjectStats(projectId),
+          getProjectModels(projectId)
         ])
 
         if (!isMounted) return
@@ -71,23 +87,7 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
         )
         setResultsData({
           productDescription: projectData.context?.product_description || '',
-          pricePerception:
-            typeof statsData?.willingness_to_pay_score === 'number'
-              ? statsData.willingness_to_pay_score
-              : null,
-          purchaseIntent:
-            typeof statsData?.willingness_to_pay_score === 'number'
-              ? statsData.willingness_to_pay_score
-              : null,
-          demandSignal:
-            typeof statsData?.demand_score === 'number' ? statsData.demand_score : null,
-          messageClarity:
-            typeof statsData?.clarity_score === 'number' ? statsData.clarity_score : null,
-          insights: [
-            simulation.summary || copy.results.noInsights,
-            simulation.summary || copy.results.noInsights,
-            simulation.summary || copy.results.noInsights,
-          ],
+          summary: simulation.summary || copy.results.noInsights
         })
 
       } catch (error) {
@@ -168,72 +168,30 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
         </div>
       </header>
 
-      <section className="results-grid">
-        <article className="project-panel results-panel">
-          <p className="panel-kicker">{copy.results.productDescription}</p>
-          <h2>{resultsData.productDescription || '—'}</h2>
-        </article>
-
-        <article className="project-panel results-panel">
-          <p className="panel-kicker">{copy.results.metricsTitle}</p>
-          <div className="results-metrics-grid">
-            <div className="results-metric-card">
-              <span>{copy.results.demandScore}</span>
-              <strong>{typeof resultsData.demandSignal === 'number' ? `${Math.round(resultsData.demandSignal)}%` : '—'}</strong>
-            </div>
-            <div className="results-metric-card">
-              <span>{copy.results.purchaseIntent}</span>
-              <strong>{typeof resultsData.purchaseIntent === 'number' ? `${Math.round(resultsData.purchaseIntent)}%` : '—'}</strong>
-            </div>
-            <div className="results-metric-card">
-              <span>{copy.results.priceAcceptance}</span>
-              <strong>{typeof resultsData.pricePerception === 'number' ? `${Math.round(resultsData.pricePerception)}%` : '—'}</strong>
-            </div>
-            <div className="results-metric-card">
-              <span>{copy.results.messageClarity}</span>
-              <strong>{typeof resultsData.messageClarity === 'number' ? `${Math.round(resultsData.messageClarity)}%` : '—'}</strong>
-            </div>
-          </div>
-        </article>
-
-        <article className="project-panel results-panel results-panel-wide">
-          <div className="project-new-simulation-heading">
-            <p className="panel-kicker">{copy.results.personasTitle}</p>
-            <h2>{copy.results.personasTitle}</h2>
-          </div>
-          <div className="user-persona-list">
-            {personas.map((persona) => (
-              <UserPersonaCard key={persona.id} persona={persona} copy={copy} hideActions />
-            ))}
-          </div>
-        </article>
-
-        <article className="project-panel results-panel">
-          <div className="project-new-simulation-heading">
-            <p className="panel-kicker">{copy.results.chartsTitle}</p>
-            <h2>{copy.results.chartsTitle}</h2>
-          </div>
-          <div className="results-bars">
-            <MetricBar label={copy.results.demandScore} value={resultsData.demandSignal} />
-            <MetricBar label={copy.results.purchaseIntent} value={resultsData.purchaseIntent} />
-            <MetricBar label={copy.results.priceAcceptance} value={resultsData.pricePerception} />
-            <MetricBar label={copy.results.messageClarity} value={resultsData.messageClarity} />
-          </div>
-        </article>
-
-        <article className="project-panel results-panel">
+      <section className="project-shell">
+        <article className="project-panel summary-panel">
           <div className="project-new-simulation-heading">
             <p className="panel-kicker">{copy.results.insightsTitle}</p>
-            <h2>{copy.results.insightsTitle}</h2>
+            <h2>Analysis Summary</h2>
           </div>
-          <div className="results-insights">
-            {resultsData.insights.map((insight, index) => (
-              <div key={`${index}-${insight}`} className="results-insight-card">
-                {insight}
-              </div>
-            ))}
+          <div className="summary-content">
+            {parseMarkdownToElements(resultsData.summary)}
           </div>
         </article>
+
+        {personas.length > 0 && (
+          <article className="project-panel personas-panel">
+            <div className="project-new-simulation-heading">
+              <p className="panel-kicker">{copy.results.personasTitle}</p>
+              <h2>Participants Context</h2>
+            </div>
+            <div className="user-persona-list">
+              {personas.map((persona) => (
+                <UserPersonaCard key={persona.id} persona={persona} copy={copy} hideActions />
+              ))}
+            </div>
+          </article>
+        )}
       </section>
     </section>
   )
