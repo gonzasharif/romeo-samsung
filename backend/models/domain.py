@@ -62,7 +62,7 @@ class SimulationRun(BaseModel):
     agents_snapshot: list[TargetModel]
     started_at: datetime
     completed_at: datetime | None = None
-    summary: str | None = None
+    summary: dict[str, str | dict[str, str]] | str | list[str] = Field(default_factory=list) 
 
 class Project(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

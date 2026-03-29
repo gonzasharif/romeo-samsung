@@ -4,7 +4,7 @@ from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, TargetMo
 from utils.common import now_utc
 from services.auth_service import get_authenticated_user, get_project_or_404, assert_project_owner
 from utils.supabase_client import supabase
-from services.api_llm_service import start_model, ask_model
+from services.api_llm_service import start_model, ask_model,stop_model
 import asyncio
 import uuid
 
@@ -240,14 +240,15 @@ def create_simulation(project_id: str, payload: SimulationCreate, user: User = D
     supabase.table("simulation_runs").insert(run_data).execute()
 
     print(agents)
-    asyncio.run(start_model({"model_name": "gemma-3-4b-it-Q4_K_M.gguf", "agent_context": ""}))
+    model = asyncio.run(start_model({"model_name": "gemma-3-4b-it-Q4_K_M.gguf", "agent_context": ""}))
+
+    print(model)
 
     for agent in agents:
         summary_lines.append(f"\n### Respuestas de {agent.name}")
-        for question in payload.questions:
-            ask_payload = {
-                "model_id": agent.model_id,
-                "prompt": question,
+        ask_payload = {
+                "model_id": model["model_id"],
+                "prompt": "",
                 "project_id": project_id,
                 "scenario_name": payload.scenario_name,
                 "provider": payload.provider,
@@ -255,10 +256,10 @@ def create_simulation(project_id: str, payload: SimulationCreate, user: User = D
                 "overrides": payload.overrides,
                 "agents_snapshot": [agent.model_dump() for agent in project.agents],
             }
-            answer_data = asyncio.run(ask_model(ask_payload))
-            answer_text = answer_data.get("response", "Sin respuesta.")
-            summary_lines.append(f"**P:** {question}\n**R:** {answer_text}")
-    
+        answer_data = asyncio.run(ask_model(ask_payload))
+        answer_text = answer_data.get("response", "Sin respuesta.")
+   
+    asyncio.run(stop_model(model["model_id"]))
 
     supabase.table("projects").update({"updated_at": timestamp}).eq("id", project_id).execute()
 

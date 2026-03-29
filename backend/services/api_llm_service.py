@@ -55,7 +55,7 @@ async def ask_model(request_data: dict):
                     agents_snapshot=request_data.get("agents_snapshot", []),
                     simulation_id=request_data.get("simulation_id")
                 )
-                db_response = supabase.table("simulation_runs").insert(sim_run.model_dump()).execute()
+                db_response = supabase.table("simulation_runs").insert(sim_run.model_dump(mode="json")).execute()
                 if db_response.data:
                     data["saved_run"] = db_response.data[0]
                     
