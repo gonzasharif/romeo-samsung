@@ -8,6 +8,7 @@ import {
   getProjectSimulations,
   getProjectStats,
 } from '../services/api'
+import type { SimulationResultsData } from '../types/simulationResults'
 import { mapTargetModelToUserPersona, type TargetModelApi } from '../utils/userPersonaMapper'
 
 type SimulationResultsProps = {
@@ -41,9 +42,7 @@ function MetricBar({
 
 function SimulationResults({ projectId, simulationId, copy, onNavigate }: SimulationResultsProps) {
   const [isLoading, setIsLoading] = useState(true)
-  const [project, setProject] = useState<any>(null)
-  const [simulation, setSimulation] = useState<any>(null)
-  const [stats, setStats] = useState<any>(null)
+  const [resultsData, setResultsData] = useState<SimulationResultsData | null>(null)
   const [personas, setPersonas] = useState<any[]>([])
 
   useEffect(() => {
@@ -59,20 +58,43 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
         ])
 
         if (!isMounted) return
+        const simulation = simulationsData.find((item: any) => item.id === simulationId)
 
-        setProject(projectData)
-        setSimulation(simulationsData.find((item: any) => item.id === simulationId) || null)
+        if (!projectData || !simulation) {
+          setResultsData(null)
+          setPersonas([])
+          return
+        }
+
         setPersonas(
           (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
         )
-        setStats(statsData)
+        setResultsData({
+          productDescription: projectData.context?.product_description || '',
+          pricePerception:
+            typeof statsData?.willingness_to_pay_score === 'number'
+              ? statsData.willingness_to_pay_score
+              : null,
+          purchaseIntent:
+            typeof statsData?.willingness_to_pay_score === 'number'
+              ? statsData.willingness_to_pay_score
+              : null,
+          demandSignal:
+            typeof statsData?.demand_score === 'number' ? statsData.demand_score : null,
+          messageClarity:
+            typeof statsData?.clarity_score === 'number' ? statsData.clarity_score : null,
+          insights: [
+            simulation.summary || copy.results.noInsights,
+            simulation.summary || copy.results.noInsights,
+            simulation.summary || copy.results.noInsights,
+          ],
+        })
+
       } catch (error) {
         console.error(error)
         if (!isMounted) return
-        setProject(null)
-        setSimulation(null)
+        setResultsData(null)
         setPersonas([])
-        setStats(null)
       } finally {
         if (isMounted) setIsLoading(false)
       }
@@ -95,7 +117,7 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
     )
   }
 
-  if (!simulation || !project) {
+  if (!resultsData) {
     return (
       <section className="results-shell">
         <header className="project-topbar">
@@ -149,7 +171,7 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
       <section className="results-grid">
         <article className="project-panel results-panel">
           <p className="panel-kicker">{copy.results.productDescription}</p>
-          <h2>{project.context?.product_description || '—'}</h2>
+          <h2>{resultsData.productDescription || '—'}</h2>
         </article>
 
         <article className="project-panel results-panel">
@@ -157,31 +179,19 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
           <div className="results-metrics-grid">
             <div className="results-metric-card">
               <span>{copy.results.demandScore}</span>
-              <strong>
-                {typeof stats?.demand_score === 'number' ? `${Math.round(stats.demand_score)}%` : '—'}
-              </strong>
+              <strong>{typeof resultsData.demandSignal === 'number' ? `${Math.round(resultsData.demandSignal)}%` : '—'}</strong>
             </div>
             <div className="results-metric-card">
               <span>{copy.results.purchaseIntent}</span>
-              <strong>
-                {typeof stats?.willingness_to_pay_score === 'number'
-                  ? `${Math.round(stats.willingness_to_pay_score)}%`
-                  : '—'}
-              </strong>
+              <strong>{typeof resultsData.purchaseIntent === 'number' ? `${Math.round(resultsData.purchaseIntent)}%` : '—'}</strong>
             </div>
             <div className="results-metric-card">
               <span>{copy.results.priceAcceptance}</span>
-              <strong>
-                {typeof stats?.willingness_to_pay_score === 'number'
-                  ? `${Math.round(stats.willingness_to_pay_score)}%`
-                  : '—'}
-              </strong>
+              <strong>{typeof resultsData.pricePerception === 'number' ? `${Math.round(resultsData.pricePerception)}%` : '—'}</strong>
             </div>
             <div className="results-metric-card">
               <span>{copy.results.messageClarity}</span>
-              <strong>
-                {typeof stats?.clarity_score === 'number' ? `${Math.round(stats.clarity_score)}%` : '—'}
-              </strong>
+              <strong>{typeof resultsData.messageClarity === 'number' ? `${Math.round(resultsData.messageClarity)}%` : '—'}</strong>
             </div>
           </div>
         </article>
@@ -204,16 +214,10 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
             <h2>{copy.results.chartsTitle}</h2>
           </div>
           <div className="results-bars">
-            <MetricBar label={copy.results.demandScore} value={stats?.demand_score} />
-            <MetricBar
-              label={copy.results.purchaseIntent}
-              value={stats?.willingness_to_pay_score}
-            />
-            <MetricBar
-              label={copy.results.priceAcceptance}
-              value={stats?.willingness_to_pay_score}
-            />
-            <MetricBar label={copy.results.messageClarity} value={stats?.clarity_score} />
+            <MetricBar label={copy.results.demandScore} value={resultsData.demandSignal} />
+            <MetricBar label={copy.results.purchaseIntent} value={resultsData.purchaseIntent} />
+            <MetricBar label={copy.results.priceAcceptance} value={resultsData.pricePerception} />
+            <MetricBar label={copy.results.messageClarity} value={resultsData.messageClarity} />
           </div>
         </article>
 
@@ -223,11 +227,11 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
             <h2>{copy.results.insightsTitle}</h2>
           </div>
           <div className="results-insights">
-            {simulation.summary ? (
-              <div className="results-insight-card">{simulation.summary}</div>
-            ) : (
-              <div className="results-insight-card">{copy.results.noInsights}</div>
-            )}
+            {resultsData.insights.map((insight, index) => (
+              <div key={`${index}-${insight}`} className="results-insight-card">
+                {insight}
+              </div>
+            ))}
           </div>
         </article>
       </section>
