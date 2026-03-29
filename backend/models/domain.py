@@ -59,7 +59,7 @@ class SimulationRun(BaseModel):
     status: Literal[0, 1, 2] # 0: queued, 1: running, 2: completed
     questions: list[str]
     overrides: dict[str, str | int | float | bool]
-    agents_snapshot: list[AgentProfile]
+    agents_snapshot: list[TargetModel]
     started_at: datetime
     completed_at: datetime | None = None
     summary: str | None = None

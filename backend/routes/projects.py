@@ -4,6 +4,9 @@ from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, TargetMo
 from utils.common import now_utc
 from services.auth_service import get_authenticated_user, get_project_or_404, assert_project_owner
 from utils.supabase_client import supabase
+from services.api_llm_service import start_model, ask_model
+import asyncio
+import uuid
 
 router = APIRouter()
 
@@ -139,7 +142,6 @@ def list_project_agents(project_id: str, user: User = Depends(get_authenticated_
 
     agents = []
     for row in resp.data:
-        row.pop("target_models", None) 
         agents.append(AgentProfile(**row))
 
     return agents
@@ -212,26 +214,55 @@ def list_simulations(project_id: str, user: User = Depends(get_authenticated_use
 
 @router.post("/projects/{project_id}/simulations", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
 def create_simulation(project_id: str, payload: SimulationCreate, user: User = Depends(get_authenticated_user)) -> SimulationRun:
+
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     
     timestamp = now_utc().isoformat()
+    
+    summary_lines = []
+    summary_lines.append(f"Simulación ejecutada el {timestamp}")
+
+    agents = list_project_models(project_id, user)
     run_data = {
-        "id": new_id("run"),
-        "project_id": project_id,
+        "id": str(uuid.uuid4()),
+        "project_id": str(project_id),
         "scenario_name": payload.scenario_name,
         "provider": payload.provider,
         "status": 2,
         "questions": payload.questions,
         "overrides": payload.overrides,
-        "agents_snapshot": [m.model_dump() for m in project.agents],
+        "agents_snapshot": [agent.model_dump() for agent in agents],
         "started_at": timestamp,
         "completed_at": timestamp,
-        "summary": "Simulación mockeada en supabase."
+        "summary": "\n".join(summary_lines)
     }
-    resp = supabase.table("simulations").insert(run_data).execute()
+    supabase.table("simulation_runs").insert(run_data).execute()
+
+    print(agents)
+    asyncio.run(start_model({"model_name": "gemma-3-4b-it-Q4_K_M.gguf", "agent_context": ""}))
+
+    for agent in agents:
+        summary_lines.append(f"\n### Respuestas de {agent.name}")
+        for question in payload.questions:
+            ask_payload = {
+                "model_id": agent.model_id,
+                "prompt": question,
+                "project_id": project_id,
+                "scenario_name": payload.scenario_name,
+                "provider": payload.provider,
+                "questions": payload.questions,
+                "overrides": payload.overrides,
+                "agents_snapshot": [agent.model_dump() for agent in project.agents],
+            }
+            answer_data = asyncio.run(ask_model(ask_payload))
+            answer_text = answer_data.get("response", "Sin respuesta.")
+            summary_lines.append(f"**P:** {question}\n**R:** {answer_text}")
+    
+
     supabase.table("projects").update({"updated_at": timestamp}).eq("id", project_id).execute()
-    return SimulationRun(**resp.data[0])
+
+    return SimulationRun(**run_data)
 
 @router.post("/projects/{project_id}/runs", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
 def create_run_alias(project_id: str, payload: SimulationCreate, user: User = Depends(get_authenticated_user)) -> SimulationRun:
