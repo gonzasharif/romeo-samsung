@@ -11,6 +11,7 @@ type SimulationCardProps = {
   }
   copy: Copy
   locale: Locale
+  onClick?: (simulationId: string) => void
 }
 
 function formatDate(value: string | undefined, locale: Locale) {
@@ -31,9 +32,26 @@ function getStatusLabel(status: number, copy: Copy) {
   return copy.project.simulationCompleted
 }
 
-function SimulationCard({ simulation, copy, locale }: SimulationCardProps) {
+function SimulationCard({ simulation, copy, locale, onClick }: SimulationCardProps) {
+  const isClickable = typeof onClick === 'function'
+
   return (
-    <article className="simulation-card">
+    <article
+      className={isClickable ? 'simulation-card is-clickable' : 'simulation-card'}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onClick={isClickable ? () => onClick(simulation.id) : undefined}
+      onKeyDown={
+        isClickable
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onClick(simulation.id)
+              }
+            }
+          : undefined
+      }
+    >
       <div className="simulation-card-top">
         <div>
           <p className="simulation-card-label">{copy.project.simulationLabel}</p>

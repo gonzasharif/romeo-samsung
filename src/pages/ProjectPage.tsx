@@ -237,6 +237,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
                 simulation={simulation}
                 copy={copy}
                 locale={locale}
+                onClick={(simulationId) => onNavigate(`/project/${projectId}/results/${simulationId}`)}
               />
             ))}
           </div>
