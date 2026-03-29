@@ -42,6 +42,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
   const [isRunningSimulation, setIsRunningSimulation] = useState(false)
   const [isFormVisible, setIsFormVisible] = useState(false)
   const [shouldScrollToPersonas, setShouldScrollToPersonas] = useState(false)
+  const isPersonasLocked = userPersonas.length > 0
 
   const buildProjectPayload = () => ({
     name: project.name,
@@ -260,6 +261,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
                 type="text"
                 maxLength={50}
                 value={form.productDescription}
+                disabled={isPersonasLocked}
                 onChange={(event) =>
                   setForm((currentForm) => ({
                     ...currentForm,
@@ -277,6 +279,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
                 <input
                   type="text"
                   value={form.ageRange}
+                  disabled={isPersonasLocked}
                   onChange={(event) =>
                     setForm((currentForm) => ({
                       ...currentForm,
@@ -292,6 +295,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
                 <input
                   type="text"
                   value={form.region}
+                  disabled={isPersonasLocked}
                   onChange={(event) =>
                     setForm((currentForm) => ({
                       ...currentForm,
@@ -309,6 +313,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
                 <input
                   type="text"
                   value={form.price}
+                  disabled={isPersonasLocked}
                   onChange={(event) =>
                     setForm((currentForm) => ({
                       ...currentForm,
@@ -324,6 +329,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
                 <select
                   className="field-select"
                   value={form.sex}
+                  disabled={isPersonasLocked}
                   onChange={(event) =>
                     setForm((currentForm) => ({
                       ...currentForm,
@@ -338,16 +344,18 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
               </label>
             </div>
 
-            <div className="project-form-footer">
-              <button
-                type="button"
-                className="primary-cta"
-                onClick={() => void handleGeneratePersonas()}
-                disabled={isGeneratingPersonas}
-              >
-                {isGeneratingPersonas ? copy.project.generating : copy.project.generateUserPersonas}
-              </button>
-            </div>
+            {!isPersonasLocked ? (
+              <div className="project-form-footer">
+                <button
+                  type="button"
+                  className="primary-cta"
+                  onClick={() => void handleGeneratePersonas()}
+                  disabled={isGeneratingPersonas}
+                >
+                  {isGeneratingPersonas ? copy.project.generating : copy.project.generateUserPersonas}
+                </button>
+              </div>
+            ) : null}
           </section>
         ) : null}
 
