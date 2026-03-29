@@ -8,6 +8,7 @@ import {
   getProjectSimulations,
 } from '../services/api'
 import { mapTargetModelToUserPersona, type TargetModelApi } from '../utils/userPersonaMapper'
+import type { SimulationResultsData, SimulationResultsSection } from '../types/simulationResults'
 
 type SimulationResultsProps = {
   projectId: string
@@ -57,9 +58,59 @@ function parseMarkdownToElements(text: string) {
   })
 }
 
+function normalizeSummaryText(summary: unknown): string {
+  if (typeof summary === 'string') return summary
+  if (Array.isArray(summary)) return summary.map((item) => normalizeSummaryText(item)).join('\n\n')
+
+  if (summary && typeof summary === 'object') {
+    return Object.entries(summary)
+      .map(([key, value]) => `## ${key}\n${normalizeSummaryText(value)}`)
+      .join('\n\n')
+  }
+
+  return ''
+}
+
+function buildSummarySections(summaryText: string): SimulationResultsSection[] {
+  const lines = summaryText.split('\n')
+  const sections: SimulationResultsSection[] = []
+  let currentTitle: string | null = null
+  let currentContent: string[] = []
+
+  const flushSection = () => {
+    const content = currentContent.join('\n').trim()
+    if (!currentTitle && !content) return
+    sections.push({
+      title: currentTitle,
+      content,
+    })
+    currentTitle = null
+    currentContent = []
+  }
+
+  lines.forEach((line) => {
+    const trimmedLine = line.trim()
+    if (trimmedLine.startsWith('### ') || trimmedLine.startsWith('## ') || trimmedLine.startsWith('# ')) {
+      flushSection()
+      currentTitle = trimmedLine.replace(/^#{1,3}\s+/, '')
+      return
+    }
+
+    currentContent.push(line)
+  })
+
+  flushSection()
+
+  if (sections.length === 0 && summaryText.trim()) {
+    return [{ title: null, content: summaryText.trim() }]
+  }
+
+  return sections
+}
+
 function SimulationResults({ projectId, simulationId, copy, onNavigate }: SimulationResultsProps) {
   const [isLoading, setIsLoading] = useState(true)
-  const [resultsData, setResultsData] = useState<any>(null)
+  const [resultsData, setResultsData] = useState<SimulationResultsData | null>(null)
   const [personas, setPersonas] = useState<any[]>([])
 
   useEffect(() => {
@@ -85,9 +136,11 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
         setPersonas(
           (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
         )
+        const summaryText = normalizeSummaryText(simulation.summary || copy.results.noInsights)
         setResultsData({
           productDescription: projectData.context?.product_description || '',
-          summary: simulation.summary || copy.results.noInsights
+          summaryText,
+          sections: buildSummarySections(summaryText),
         })
 
       } catch (error) {
@@ -172,10 +225,21 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
         <article className="project-panel summary-panel">
           <div className="project-new-simulation-heading">
             <p className="panel-kicker">{copy.results.insightsTitle}</p>
-            <h2>Analysis Summary</h2>
+            <h2>{copy.results.title}</h2>
           </div>
-          <div className="summary-content">
-            {parseMarkdownToElements(resultsData.summary)}
+          <div className="summary-overview">
+            <p className="panel-kicker">{copy.results.productDescription}</p>
+            <h3>{resultsData.productDescription || '—'}</h3>
+          </div>
+          <div className="summary-sections">
+            {resultsData.sections.map((section, index) => (
+              <article key={`${section.title || 'section'}-${index}`} className="summary-section-card">
+                {section.title ? <h3 className="summary-section-title">{section.title}</h3> : null}
+                <div className="summary-content">
+                  {parseMarkdownToElements(section.content)}
+                </div>
+              </article>
+            ))}
           </div>
         </article>
 

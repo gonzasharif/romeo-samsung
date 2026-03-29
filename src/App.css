@@ -2010,10 +2010,44 @@ html[data-theme='dark'] .icon-button:hover {
 .summary-content {
   display: grid;
   gap: 1.25rem;
-  margin-top: 1.5rem;
   color: var(--text-h);
   font-size: 1.05rem;
   line-height: 1.7;
+}
+
+.summary-overview {
+  margin-top: 1.25rem;
+  padding: 1.15rem 1.2rem;
+  border-radius: 1.35rem;
+  border: 1px solid rgba(23, 37, 84, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.summary-overview h3 {
+  margin: 0.55rem 0 0;
+  font-size: 1.2rem;
+}
+
+.summary-sections {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.summary-section-card {
+  padding: 1.2rem 1.25rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(23, 37, 84, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 248, 239, 0.68)),
+    rgba(255, 255, 255, 0.72);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+}
+
+.summary-section-title {
+  margin: 0 0 0.85rem;
+  font-size: 1.15rem;
+  color: var(--accent-strong);
 }
 
 .summary-h2 {
@@ -2071,4 +2105,10 @@ html[data-theme='dark'] .icon-button:hover {
 
 html[data-theme='dark'] .summary-code {
   background: rgba(124, 92, 255, 0.2);
+}
+
+html[data-theme='dark'] .summary-overview,
+html[data-theme='dark'] .summary-section-card {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(148, 163, 184, 0.16);
 }

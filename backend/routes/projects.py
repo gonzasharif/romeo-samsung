@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, status, Response, HTTPException
+import json
 from models.domain import Project, AgentProfile, TargetModel, SimulationRun, StatsResponse, User
 from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, TargetModelCreate, SimulationCreate, TargetModelUpdate, AgentUpdate
 from utils.common import now_utc
@@ -9,6 +10,30 @@ import asyncio
 import uuid
 
 router = APIRouter()
+
+def normalize_simulation_row(row: dict) -> dict:
+    normalized = dict(row)
+
+    if normalized.get("questions") is None:
+        normalized["questions"] = []
+
+    if normalized.get("overrides") is None:
+        normalized["overrides"] = {}
+
+    agents_snapshot = normalized.get("agents_snapshot")
+    if agents_snapshot is None:
+        normalized["agents_snapshot"] = []
+    elif isinstance(agents_snapshot, str):
+        try:
+          normalized["agents_snapshot"] = json.loads(agents_snapshot)
+        except (TypeError, ValueError):
+          normalized["agents_snapshot"] = []
+
+    summary = normalized.get("summary")
+    if summary is None:
+        normalized["summary"] = ""
+
+    return normalized
 
 @router.get("/projects", response_model=list[Project])
 def list_projects(user: User = Depends(get_authenticated_user)) -> list[Project]:
@@ -210,7 +235,7 @@ def list_simulations(project_id: str, user: User = Depends(get_authenticated_use
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     resp = supabase.table("simulation_runs").select("*").eq("project_id", project_id).execute()
-    return [SimulationRun(**row) for row in resp.data]
+    return [SimulationRun(**normalize_simulation_row(row)) for row in (resp.data or [])]
 
 @router.post("/projects/{project_id}/simulations", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
 def create_simulation(project_id: str, payload: SimulationCreate, user: User = Depends(get_authenticated_user)) -> SimulationRun:
@@ -263,7 +288,7 @@ def create_simulation(project_id: str, payload: SimulationCreate, user: User = D
 
     supabase.table("projects").update({"updated_at": timestamp}).eq("id", project_id).execute()
 
-    return SimulationRun(**run_data)
+    return SimulationRun(**normalize_simulation_row(run_data))
 
 @router.post("/projects/{project_id}/runs", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
 def create_run_alias(project_id: str, payload: SimulationCreate, user: User = Depends(get_authenticated_user)) -> SimulationRun:
