@@ -25,7 +25,7 @@ services:
       - ./backend:/app # Mapea los archivos locales al contenedor para hot reload
     environment:
       - PYTHONUNBUFFERED=1 # Asegura que los logs de Python se envíen stdout en tiempo real
-      - LLM_API_URL=${LLM_API_URL:-http://host.docker.internal:8000} # Apunta al modelo local o IP externa
+      - LLM_API_URL=${LLM_API_URL:-http://api:8080} # Apunta al servicio interno 'api' por defecto
 
   api:
     build: 

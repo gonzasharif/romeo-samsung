@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 # URL base de la api_llm.
 # Se inyecta desde docker-compose.yml, apuntando al host donde corra el otro contenedor o máquina.
-LLM_API_URL = os.getenv("LLM_API_URL", "http://host.docker.internal:8000")
+LLM_API_URL = "http://api:8080"
 
 async def get_models():
     """Obtiene la lista de modelos disponibles llamando a la api_llm."""
@@ -14,7 +14,7 @@ async def get_models():
             response.raise_for_status()
             return response.json()
         except httpx.RequestError as e:
-            raise HTTPException(status_code=500, detail=f"Error conectando a api_llm: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error conectando a api_llm: {str(e)}, {LLM_API_URL}")
         except httpx.HTTPStatusError as e:
             raise HTTPException(status_code=e.response.status_code, detail=f"Error en api_llm: {e.response.text}")
 
