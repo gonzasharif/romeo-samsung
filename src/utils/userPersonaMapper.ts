@@ -7,15 +7,15 @@ export type TargetModelApi = {
   age_range?: string | null
   geography?: string | null
   income_level?: number | null
-  tech_savviness?: number | null
-  attitude?: number | null
+  tech_savviness?: string | null
+  attitude?: string | null
 }
 
 function buildSummary(model: TargetModelApi, copy: Copy) {
   const parts = [
     model.income_level != null ? copy.project.userPersonaIncome(model.income_level) : null,
-    model.tech_savviness != null ? copy.project.userPersonaTech(model.tech_savviness) : null,
-    model.attitude != null ? copy.project.userPersonaAttitude(model.attitude) : null,
+    model.tech_savviness || null,
+    model.attitude || null,
   ].filter(Boolean)
 
   return parts.join(' · ')

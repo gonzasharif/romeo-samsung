@@ -11,14 +11,14 @@ type ModelModalProps = {
 function ModelModal({ copy, model, onClose, onSave }: ModelModalProps) {
   const [name, setName] = useState(model?.name || '')
   const [ageRange, setAgeRange] = useState(model?.age_range || '')
-  const [attitude, setAttitude] = useState(model?.attitude ?? 0)
+  const [attitude, setAttitude] = useState(model?.attitude || '')
 
   const handleSave = () => {
     if (!name.trim()) return
     const payload = {
       name: name.trim(),
       age_range: ageRange.trim(),
-      attitude: parseInt(String(attitude), 10) || 0,
+      attitude: String(attitude).trim(),
     }
     onSave(payload)
   }
@@ -66,9 +66,7 @@ function ModelModal({ copy, model, onClose, onSave }: ModelModalProps) {
           <label className="field">
             <span>{copy.project.modelAttitudeLabel}</span>
             <input
-              type="number"
-              min={0}
-              max={2}
+              type="text"
               value={attitude}
               onChange={(e) => setAttitude(e.target.value)}
             />

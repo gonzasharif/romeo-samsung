@@ -12,6 +12,7 @@ import {
   getProjectSimulations,
   createProjectSimulation,
   getProjectModels,
+  generateProjectModels,
 } from '../services/api'
 import { mapTargetModelToUserPersona, type TargetModelApi } from '../utils/userPersonaMapper'
 
@@ -143,6 +144,13 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
 
       let updatedProject = optimisticProject
       updatedProject = await updateProject(projectId, projectPayload)
+
+      // Call the LLM to generate models for this project
+      const prompt = `Descripción: ${form.productDescription}. Audiencia: ${form.ageRange}. Región: ${form.region}. Precio: ${form.price}. Sexo: ${form.sex}.`
+      
+      await generateProjectModels(projectId, { 
+        prompt: prompt 
+      })
 
       setProject(updatedProject)
       const modelsData = await getProjectModels(projectId)

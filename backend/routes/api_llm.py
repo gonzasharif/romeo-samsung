@@ -24,7 +24,9 @@ async def stop_model(model_id: str):
     """Cierra la conexión con el modelo y libera VRAM."""
     return await api_llm_service.stop_model(model_id)
 
-@router.post("/create-people")
-async def create_people_model(req: CreatePeopleModelRequest):
-    """Consulta al modelo predefinido de creación de perfiles."""
-    return await api_llm_service.create_people_model(req.model_dump())
+@router.post("/{project_id}/create_people_model")
+async def create_people_model(project_id: str, req: CreatePeopleModelRequest):
+    """Consulta al modelo predefinido de creación de perfiles y los guarda."""
+    payload = req.model_dump()
+    payload["project_id"] = project_id
+    return await api_llm_service.create_people_model(payload)

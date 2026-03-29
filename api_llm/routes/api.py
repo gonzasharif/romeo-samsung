@@ -38,7 +38,7 @@ def stop_model_endpoint(model_id: str):
         return {"message": "Modelo detenido exitosamente"}
     raise HTTPException(status_code=404, detail="Modelo no encontrado")
 
-@router.post("/create_people_model/")
+@router.post("/create_people_model")
 def create_people_model_endpoint(req: CreatePeopleModelRequest):
     """Inicia el modelo predefinido y genera una respuesta con el prompt y la plantilla."""
     try:

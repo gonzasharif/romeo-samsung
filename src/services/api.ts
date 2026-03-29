@@ -182,7 +182,6 @@ export async function getProjectStats(projectId: string) {
 
 export async function createProjectSimulation(projectId: string, payload: any) {
   const session = getStoredSession()
-
   const res = await fetch(`${API_BASE_URL}/projects/${projectId}/simulations`, {
     method: 'POST',
     headers: {
@@ -222,7 +221,6 @@ export async function getProjectModels(projectId: string) {
   const sessionStr = localStorage.getItem('session')
   if (!sessionStr) throw new Error('Not authenticated')
   const session = JSON.parse(sessionStr)
-  
   const res = await fetch(`${API_BASE_URL}/projects/${projectId}/models`, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${session.access_token}` }
@@ -245,6 +243,27 @@ export async function createProjectModel(projectId: string, payload: any) {
     body: JSON.stringify(payload)
   })
   if (!res.ok) throw new Error('Error al crear modelo')
+  return await res.json()
+}
+
+export async function generateProjectModels(projectId: string, payload: any) {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  const session = JSON.parse(sessionStr)
+  
+  const res = await fetch(`${API_BASE_URL}/api-llm/${projectId}/create_people_model`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(payload)
+  })
+  
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}))
+    throw new Error(parseErrorDetail(error?.detail, 'Error al generar modelos con IA'))
+  }
   return await res.json()
 }
 

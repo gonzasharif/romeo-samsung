@@ -23,8 +23,8 @@ class TargetModel(BaseModel):
     age_range: str | None = None
     income_level: Literal[0, 1, 2] | None = None
     geography: str | None = None
-    tech_savviness: Literal[0, 1, 2] | None = None
-    attitude: Literal[0, 1, 2, 3] | None = None
+    tech_savviness: str | None = None
+    attitude: list[str] = Field(default_factory=list)
 
 class AgentProfile(BaseModel):
     id: str
