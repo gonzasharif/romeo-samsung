@@ -1,6 +1,6 @@
 from typing import Literal
 from pydantic import BaseModel, Field
-from models.domain import CompanyProfile, ProjectContext, TargetModel
+from models.domain import CompanyProfile, ProjectContext
 
 class UserCreate(BaseModel):
     full_name: str

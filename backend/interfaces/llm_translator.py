@@ -1,8 +1,7 @@
 import uuid
 from typing import Dict, Any, Optional
-from datetime import datetime, timezone
 
-from models.domain import TargetModel, SimulationRun
+from models.domain import TargetModel
 
 def parse_income_level(income_str: str) -> Optional[int]:
     """
@@ -68,63 +67,4 @@ def translate_llm_to_target_model(
         geography=geography,
         tech_savviness=tech_savviness,
         attitude=attitude
-    )
-
-
-
-def translate_llm_to_simulation_run(
-    llm_data: Any,
-    project_id: str,
-    scenario_name: str,
-    provider: str,
-    questions: list[str],
-    overrides: dict,
-    agents_snapshot: list,
-    simulation_id: Optional[str] = None,
-    started_at: Optional[datetime] = None
-) -> SimulationRun:
-    """
-    Traduce el output del LLM (proveniente de ask_model) y los metadatos del proyecto
-    a una entidad SimulationRun para persistir en la base de datos.
-    
-    Args:
-        llm_data (Any): El resultado de ask_model, puede ser un dict (parseado) o un str.
-        project_id (str): ID del proyecto.
-        scenario_name (str): Nombre del escenario.
-        provider (str): El proveedor (ej. 'mock').
-        questions (list[str]): Lista de preguntas hechas.
-        overrides (dict): Campos sobreescritos en el contexto.
-        agents_snapshot (list): Lista de diccionarios con el snapshot de los agentes.
-        simulation_id (str, optional): UUID de la simulación. Se genera uno si no se provee.
-        started_at (datetime, optional): Fecha de inicio. Si no se indica, usa la fecha actual.
-        
-    Returns:
-        SimulationRun: Instancia pydantic lista para insertar.
-    """
-    _id = simulation_id if simulation_id else str(uuid.uuid4())
-    
-    # Extraer el summary/respuesta del output de la IA
-    summary_text = ""
-    if isinstance(llm_data, dict):
-        summary_text = llm_data.get("summary", llm_data.get("response", str(llm_data)))
-    elif isinstance(llm_data, list):
-        summary_text = "\n".join(str(item) for item in llm_data)
-    else:
-        summary_text = str(llm_data)
-
-    now = datetime.now(timezone.utc)
-    start_time = started_at if started_at else now
-    
-    return SimulationRun(
-        id=_id,
-        project_id=project_id,
-        scenario_name=scenario_name,
-        provider=provider,
-        status=2, # statu = completed
-        questions=questions,
-        overrides=overrides,
-        agents_snapshot=agents_snapshot,
-        started_at=start_time,
-        completed_at=now,
-        summary=summary_text
     )

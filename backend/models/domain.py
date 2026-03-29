@@ -59,10 +59,10 @@ class SimulationRun(BaseModel):
     status: Literal[0, 1, 2] # 0: queued, 1: running, 2: completed
     questions: list[str]
     overrides: dict[str, str | int | float | bool]
-    agents_snapshot: list[TargetModel]
+    agents_snapshot: list[AgentProfile]
     started_at: datetime
     completed_at: datetime | None = None
-    summary: dict[str, str | dict[str, str]] | str | list[str] = Field(default_factory=list) 
+    summary: str | None = None
 
 class Project(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

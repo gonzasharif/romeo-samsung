@@ -17,7 +17,7 @@ async def start_model(req: StartModelRequest):
 @router.post("/{model_id}/ask")
 async def ask_model(model_id: str, req: AskModelRequest):
     """Envía un prompt a un modelo en memoria y devuelve la respuesta."""
-    return await api_llm_service.ask_model({"model_id": model_id, "prompt": req.prompt})
+    return await api_llm_service.ask_model(model_id, req.prompt)
 
 @router.post("/{model_id}/stop")
 async def stop_model(model_id: str):
