@@ -13,11 +13,12 @@ export type UserPersona = {
 type UserPersonaCardProps = {
   persona: UserPersona
   copy: Copy
-  onEdit: (persona: UserPersona) => void
-  onDelete: (personaId: string) => void
+  onEdit?: (persona: UserPersona) => void
+  onDelete?: (personaId: string) => void
+  hideActions?: boolean
 }
 
-function UserPersonaCard({ persona, copy, onEdit, onDelete }: UserPersonaCardProps) {
+function UserPersonaCard({ persona, copy, onEdit, onDelete, hideActions = false }: UserPersonaCardProps) {
   return (
     <article className="user-persona-card">
       <div className="user-persona-card-top">
@@ -34,14 +35,24 @@ function UserPersonaCard({ persona, copy, onEdit, onDelete }: UserPersonaCardPro
         <span>{copy.project.userPersonaSex(persona.sex)}</span>
       </div>
 
-      <div className="user-persona-actions">
-        <button type="button" className="secondary-button persona-action-button" onClick={() => onEdit(persona)}>
-          {copy.project.userPersonaEdit}
-        </button>
-        <button type="button" className="project-delete-button persona-action-button" onClick={() => onDelete(persona.id)}>
-          {copy.project.userPersonaDelete}
-        </button>
-      </div>
+      {!hideActions ? (
+        <div className="user-persona-actions">
+          <button
+            type="button"
+            className="secondary-button persona-action-button"
+            onClick={() => onEdit?.(persona)}
+          >
+            {copy.project.userPersonaEdit}
+          </button>
+          <button
+            type="button"
+            className="project-delete-button persona-action-button"
+            onClick={() => onDelete?.(persona.id)}
+          >
+            {copy.project.userPersonaDelete}
+          </button>
+        </div>
+      ) : null}
     </article>
   )
 }

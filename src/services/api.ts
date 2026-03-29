@@ -67,20 +67,18 @@ export async function getProjects() {
 }
 
 export async function createProject(name: string) {
-  const sessionStr = localStorage.getItem('session')
-  if (!sessionStr) throw new Error('Not authenticated')
-  const session = JSON.parse(sessionStr)
+  const session = getStoredSession()
   
   const payload = {
     name,
     context: {
-      company_summary: "Data to be defined...",
+      company_summary: "",
       product_name: name,
-      product_description: "Data to be defined...",
-      target_audience: "Data to be defined...",
-      pricing_notes: "To be defined",
-      market_context: "To be defined",
-      category: "To be defined"
+      product_description: "",
+      target_audience: "",
+      pricing_notes: "",
+      market_context: "",
+      category: ""
     }
   }
 
@@ -165,6 +163,20 @@ export async function getProjectSimulations(projectId: string) {
 
   if (res.status === 401) throw new Error('Unauthorized')
   if (!res.ok) throw new Error('Falla al cargar simulaciones')
+  return await res.json()
+}
+
+export async function getProjectStats(projectId: string) {
+  const session = getStoredSession()
+
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/stats`, {
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`
+    }
+  })
+
+  if (res.status === 401) throw new Error('Unauthorized')
+  if (!res.ok) throw new Error('Falla al cargar métricas')
   return await res.json()
 }
 

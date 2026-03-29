@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import ProjectPage from './pages/ProjectPage'
 import ProfilePage from './pages/ProfilePage'
+import SimulationResults from './pages/SimulationResults'
 import SignupPage from './pages/SignupPage'
 import { messages } from './i18n'
 import type { Locale } from './i18n'
@@ -110,7 +111,22 @@ function App() {
   }
 
   if (route.startsWith('/project/')) {
-    const projectId = route.replace('/project/', '')
+    const routeParts = route.split('/').filter(Boolean)
+
+    if (routeParts[2] === 'results' && routeParts[3]) {
+      return (
+        <main className="landing-shell profile-shell-wrapper">
+          <SimulationResults
+            projectId={routeParts[1]}
+            simulationId={routeParts[3]}
+            onNavigate={navigate}
+            copy={copy}
+          />
+        </main>
+      )
+    }
+
+    const projectId = routeParts[1]
     return (
       <main className="landing-shell profile-shell-wrapper">
         <ProjectPage
