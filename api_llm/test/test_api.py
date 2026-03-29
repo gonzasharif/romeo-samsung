@@ -58,22 +58,33 @@ def test_create_people_model():
         
         # Formatear la respuesta por consola
         respuesta_llm = data.get("response", "")
-        for linea in respuesta_llm.split('\n'):
-            print(f"      {linea}")
+        
+        parsed_data = None
+        if isinstance(respuesta_llm, str):
+            for linea in respuesta_llm.split('\n'):
+                print(f"      {linea}")
+            
+            # Buscar el bloque JSON por si viene en formato markdown
+            json_match = re.search(r'```(?:json)?\n?(.*?)\n?```', respuesta_llm, re.DOTALL)
+            json_str = json_match.group(1) if json_match else respuesta_llm.strip()
+            try:
+                parsed_data = json.loads(json_str)
+            except json.JSONDecodeError:
+                print(f"      [!] No se encontró JSON válido en la respuesta del modelo.")
+                parsed_data = []
+        else:
+            # Ya es un objeto parseado (la API internamente ya lo leyó y nos retornó la Lista o Dict)
+            print("      (Datos JSON ya estructurados por la API)")
+            print(f"      {json.dumps(respuesta_llm, indent=2, ensure_ascii=False).replace(chr(10), chr(10) + '      ')}")
+            parsed_data = respuesta_llm
             
         print("      " + "-" * 60 + "\n")
         
         # --- PARSEANDO LA ESTRUCTURA DE DATOS ---
         print("      [+] Validando datos estructurados con Pydantic (ConsumerProfile)...")
         
-        # Buscar el bloque JSON por si viene en formato markdown
-        json_match = re.search(r'```(?:json)?\n?(.*?)\n?```', respuesta_llm, re.DOTALL)
-        json_str = json_match.group(1) if json_match else respuesta_llm.strip()
-        
         perfiles_pydantic = []
-        try:
-            parsed_data = json.loads(json_str)
-            
+        if parsed_data:
             # En caso de que venga envuelto en un dict, p. ej {"perfiles": [...]}
             if isinstance(parsed_data, dict):
                 for v in parsed_data.values():
@@ -85,6 +96,9 @@ def test_create_people_model():
                 parsed_data = [parsed_data]
                 
             for item in parsed_data:
+                # Comprobar que sea un dict
+                if not isinstance(item, dict):
+                    continue
                 try:
                     perfil = ConsumerProfile(**item)
                     perfiles_pydantic.append(perfil)
@@ -92,9 +106,6 @@ def test_create_people_model():
                     print(f"      [!] Advertencia: Perfil omitido por formato inválido - {e}")
                     
             print(f"      [Éxito] Se estructuraron correctamente {len(perfiles_pydantic)} perfiles.")
-            
-        except json.JSONDecodeError:
-            print(f"      [!] No se encontró JSON válido en la respuesta del modelo.")
         
         return producto_prueba, perfiles_pydantic
         
@@ -158,8 +169,13 @@ def test_ask_model(model_id: str, perfiles: list):
 
                 print("      Respuesta del modelo:")
                 print("      " + "-" * 40)
-                for linea in respuesta.split("\n"):
-                    print(f"      {linea}")
+                if isinstance(respuesta, str):
+                    for linea in respuesta.split("\n"):
+                        print(f"      {linea}")
+                else:
+                    formatted_json = json.dumps(respuesta, indent=2, ensure_ascii=False)
+                    for linea in formatted_json.split("\n"):
+                        print(f"      {linea}")
                 print("      " + "-" * 40)
             else:
                 print(f"      [Falló] Error HTTP: {response.text}")

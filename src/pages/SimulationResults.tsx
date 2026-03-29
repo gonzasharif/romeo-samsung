@@ -58,17 +58,54 @@ function parseMarkdownToElements(text: string) {
   })
 }
 
+const KEY_LABELS: Record<string, string> = {
+  pricePerception: "Percepción de Precio",
+  purchaseIntent: "Intención de Compra",
+  demandSignal: "Señal de Demanda",
+  messageClarity: "Claridad del Mensaje",
+  insights: "Desglose Cualitativo"
+}
+
 function normalizeSummaryText(summary: unknown): string {
-  if (typeof summary === 'string') return summary
-  if (Array.isArray(summary)) return summary.map((item) => normalizeSummaryText(item)).join('\n\n')
+  if (typeof summary === 'string') {
+    try {
+      const parsed = JSON.parse(summary)
+      if (parsed && typeof parsed === 'object') {
+        return normalizeSummaryText(parsed)
+      }
+    } catch {
+      // Not JSON, just regular Markdown/Text summary.
+    }
+    return summary
+  }
+
+  if (Array.isArray(summary)) {
+    return summary.map((item) => normalizeSummaryText(item)).join('\n\n---\n\n')
+  }
 
   if (summary && typeof summary === 'object') {
     return Object.entries(summary)
-      .map(([key, value]) => `## ${key}\n${normalizeSummaryText(value)}`)
+      .map(([key, value]) => {
+        const label = KEY_LABELS[key] || key
+
+        if (Array.isArray(value)) {
+          const listText = value.map(v => `- ${normalizeSummaryText(v)}`).join('\n')
+          return `### ${label}\n${listText}`
+        }
+
+        let formattedValue = normalizeSummaryText(value)
+        if (typeof value === 'number' && ['pricePerception', 'purchaseIntent', 'demandSignal', 'messageClarity'].includes(key)) {
+           if (value <= 1.5) formattedValue = "Bajo (1/3)"
+           else if (value <= 2.5) formattedValue = "Medio (2/3)"
+           else formattedValue = "Alto (3/3)"
+        }
+        
+        return `### ${label}\n${formattedValue}`
+      })
       .join('\n\n')
   }
 
-  return ''
+  return String(summary || '')
 }
 
 function buildSummarySections(summaryText: string): SimulationResultsSection[] {
@@ -232,7 +269,7 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
             <h3>{resultsData.productDescription || '—'}</h3>
           </div>
           <div className="summary-sections">
-            {resultsData.sections.map((section, index) => (
+            {resultsData.sections.map((section: any, index: number) => (
               <article key={`${section.title || 'section'}-${index}`} className="summary-section-card">
                 {section.title ? <h3 className="summary-section-title">{section.title}</h3> : null}
                 <div className="summary-content">

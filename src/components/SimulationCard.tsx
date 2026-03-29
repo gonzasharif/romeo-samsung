@@ -44,11 +44,11 @@ function SimulationCard({ simulation, copy, locale, onClick }: SimulationCardPro
       onKeyDown={
         isClickable
           ? (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                onClick(simulation.id)
-              }
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              onClick(simulation.id)
             }
+          }
           : undefined
       }
     >
