@@ -6,7 +6,14 @@ import SimulationCard from '../components/SimulationCard'
 import UserPersonaCard from '../components/UserPersonaCard'
 import type { UserPersona } from '../components/UserPersonaCard'
 import UserPersonaModal from '../modals/UserPersonaModal'
-import { getProject, updateProject, getProjectSimulations, createProjectSimulation } from '../services/api'
+import {
+  getProject,
+  updateProject,
+  getProjectSimulations,
+  createProjectSimulation,
+  getProjectModels,
+} from '../services/api'
+import { mapTargetModelToUserPersona, type TargetModelApi } from '../utils/userPersonaMapper'
 
 type ProjectPageProps = {
   projectId: string
@@ -18,6 +25,7 @@ type ProjectPageProps = {
 
 function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) {
   const newSimulationRef = useRef<HTMLElement | null>(null)
+  const userPersonasRef = useRef<HTMLElement | null>(null)
   const [project, setProject] = useState<any>(null)
   const [simulations, setSimulations] = useState<any[]>([])
   const [userPersonas, setUserPersonas] = useState<UserPersona[]>([])
@@ -29,38 +37,23 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
     price: '',
     sex: 'any',
   })
-  const [isSaving, setIsSaving] = useState(false)
+  const [isGeneratingPersonas, setIsGeneratingPersonas] = useState(false)
+  const [isRunningSimulation, setIsRunningSimulation] = useState(false)
   const [isFormVisible, setIsFormVisible] = useState(false)
+  const [shouldScrollToPersonas, setShouldScrollToPersonas] = useState(false)
 
-  const buildDraftPersonas = (): UserPersona[] => [
-    {
-      id: crypto.randomUUID(),
-      name: copy.project.userPersonaPrimaryName,
-      summary: copy.project.userPersonaPrimarySummary,
-      ageRange: form.ageRange,
-      region: form.region,
-      price: form.price,
-      sex: form.sex,
+  const buildProjectPayload = () => ({
+    name: project.name,
+    context: {
+      company_summary: project.context?.company_summary || project.name,
+      product_name: project.name,
+      product_description: form.productDescription,
+      target_audience: form.ageRange,
+      pricing_notes: form.price,
+      market_context: form.region,
+      category: form.sex,
     },
-    {
-      id: crypto.randomUUID(),
-      name: copy.project.userPersonaSecondaryName,
-      summary: copy.project.userPersonaSecondarySummary,
-      ageRange: form.ageRange,
-      region: form.region,
-      price: form.price,
-      sex: form.sex,
-    },
-    {
-      id: crypto.randomUUID(),
-      name: copy.project.userPersonaTertiaryName,
-      summary: copy.project.userPersonaTertiarySummary,
-      ageRange: form.ageRange,
-      region: form.region,
-      price: form.price,
-      sex: form.sex,
-    },
-  ]
+  })
 
   useEffect(() => {
     let isMounted = true
@@ -88,6 +81,18 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
           if (!isMounted) return
           setSimulations([])
         }
+
+        try {
+          const modelsData = await getProjectModels(projectId)
+          if (!isMounted) return
+          setUserPersonas(
+            (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
+          )
+        } catch (modelsError) {
+          console.error(modelsError)
+          if (!isMounted) return
+          setUserPersonas([])
+        }
       } catch (projectError) {
         console.error(projectError)
         if (!isMounted) return
@@ -100,7 +105,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
     return () => {
       isMounted = false
     }
-  }, [projectId, onNavigate])
+  }, [projectId, onNavigate, copy])
 
   useEffect(() => {
     if (!isFormVisible || !newSimulationRef.current) return
@@ -111,23 +116,52 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
     })
   }, [isFormVisible])
 
-  const handleSave = async () => {
+  useEffect(() => {
+    if (!shouldScrollToPersonas || userPersonas.length === 0 || !userPersonasRef.current) return
+
+    userPersonasRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+    setShouldScrollToPersonas(false)
+  }, [userPersonas, shouldScrollToPersonas])
+
+  const handleGeneratePersonas = async () => {
     if (!project) return
 
-    setIsSaving(true)
+    setIsGeneratingPersonas(true)
     try {
-      const updatedProject = await updateProject(projectId, {
-        name: project.name,
+      const projectPayload = buildProjectPayload()
+      const optimisticProject = {
+        ...project,
+        ...projectPayload,
         context: {
-          company_summary: project.context?.company_summary || project.name,
-          product_name: project.name,
-          product_description: form.productDescription,
-          target_audience: form.ageRange,
-          pricing_notes: form.price,
-          market_context: form.region,
-          category: form.sex,
+          ...project.context,
+          ...projectPayload.context,
         },
-      })
+      }
+
+      let updatedProject = optimisticProject
+      updatedProject = await updateProject(projectId, projectPayload)
+
+      setProject(updatedProject)
+      const modelsData = await getProjectModels(projectId)
+      setUserPersonas(
+        (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
+      )
+      setShouldScrollToPersonas(true)
+    } catch (error: any) {
+      alert(error.message)
+    } finally {
+      setIsGeneratingPersonas(false)
+    }
+  }
+
+  const handleRunSimulation = async () => {
+    if (!project || userPersonas.length === 0) return
+
+    setIsRunningSimulation(true)
+    try {
       const newSimulation = await createProjectSimulation(projectId, {
         scenario_name: `${project.name} · ${new Date().toLocaleString()}`,
         questions: [],
@@ -140,14 +174,12 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
         },
         provider: 'mock',
       })
-      setProject(updatedProject)
       setSimulations((currentSimulations) => [newSimulation, ...currentSimulations])
-      setUserPersonas(buildDraftPersonas())
-      setIsFormVisible(false)
+      onNavigate(`/project/${projectId}/results/${newSimulation.id}`)
     } catch (error: any) {
       alert(error.message)
     } finally {
-      setIsSaving(false)
+      setIsRunningSimulation(false)
     }
   }
 
@@ -302,17 +334,17 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
               <button
                 type="button"
                 className="primary-cta"
-                onClick={() => void handleSave()}
-                disabled={isSaving}
+                onClick={() => void handleGeneratePersonas()}
+                disabled={isGeneratingPersonas}
               >
-                {isSaving ? copy.project.generating : copy.project.generateUserPersonas}
+                {isGeneratingPersonas ? copy.project.generating : copy.project.generateUserPersonas}
               </button>
             </div>
           </section>
         ) : null}
 
         {userPersonas.length > 0 ? (
-          <section className="user-personas-section">
+          <section ref={userPersonasRef} className="user-personas-section">
             <div className="project-new-simulation-heading">
               <p className="panel-kicker">{copy.project.userPersonasTag}</p>
               <h2>{copy.project.userPersonasTitle}</h2>
@@ -332,6 +364,17 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
                   }
                 />
               ))}
+            </div>
+
+            <div className="project-form-footer">
+              <button
+                type="button"
+                className="primary-cta"
+                onClick={() => void handleRunSimulation()}
+                disabled={isRunningSimulation}
+              >
+                {isRunningSimulation ? copy.project.runningSimulation : copy.project.runSimulation}
+              </button>
             </div>
           </section>
         ) : null}

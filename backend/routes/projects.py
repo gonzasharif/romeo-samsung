@@ -17,11 +17,11 @@ def list_projects(user: User = Depends(get_authenticated_user)) -> list[Project]
 
     return projects_list
 
-@router.post("/projects", response_model=None, status_code=status.HTTP_201_CREATED)
+@router.post("/projects", response_model=Project, status_code=status.HTTP_201_CREATED)
 def create_project(
     payload: ProjectCreate,
     user: User = Depends(get_authenticated_user),
-) -> None:
+) -> Project:
     timestamp = now_utc().isoformat()
     
     p_data = {
@@ -32,9 +32,8 @@ def create_project(
         "created_at": timestamp,
         "updated_at": timestamp,
     }
-    supabase.table("projects").insert(p_data).execute()
-        
-    return
+    resp = supabase.table("projects").insert(p_data).execute()
+    return Project(**resp.data[0])
 
 @router.get("/projects/{project_id}", response_model=Project)
 def get_project(project_id: str, user: User = Depends(get_authenticated_user)) -> Project:
