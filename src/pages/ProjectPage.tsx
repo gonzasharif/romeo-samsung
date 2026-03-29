@@ -166,6 +166,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
     }
   }
 
+
   const handleRunSimulation = async () => {
     if (!project || userPersonas.length === 0) return
 
