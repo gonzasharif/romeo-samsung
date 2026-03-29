@@ -2,6 +2,7 @@ import os
 import uuid
 from typing import Dict, Any
 from llama_cpp import Llama
+from utils.jsonparser import extract_and_parse_json
 
 # Estructura global para almacenar modelos activos y su contexto (system prompt)
 _active_models: Dict[str, Dict[str, Any]] = {}
@@ -59,7 +60,7 @@ def start_model(model_name: str, agent_context: str, n_gpu_layers: int = -1, n_c
     }
     return model_id
 
-def ask_model(model_id: str, prompt: str) -> str:
+def ask_model(model_id: str, prompt: str) -> Any:
     if model_id not in _active_models:
         raise ValueError("ID de modelo no encontrado o inactivo.")
     
@@ -78,7 +79,11 @@ def ask_model(model_id: str, prompt: str) -> str:
         stream=False
     )
     
-    return response["choices"][0]["message"]["content"]
+    raw_text = response["choices"][0]["message"]["content"]
+    try:
+        return extract_and_parse_json(raw_text)
+    except Exception:
+        return raw_text
 
 def stop_model(model_id: str) -> bool:
     if model_id in _active_models:
@@ -88,7 +93,7 @@ def stop_model(model_id: str) -> bool:
 
 DEFAULT_PEOPLE_MODEL = "gemma-3-4b-it-Q4_K_M.gguf"
 
-def create_people_model(prompt: str) -> str:
+def create_people_model(prompt: str) -> Any:
     # 1. Cargar el system prompt base (busca en services/ y en root)
     template_path = os.path.join(os.path.dirname(__file__), "people_model_template.txt")
     try:
@@ -124,4 +129,8 @@ def create_people_model(prompt: str) -> str:
         stream=False
     )
     
-    return response["choices"][0]["message"]["content"]
+    raw_text = response["choices"][0]["message"]["content"]
+    try:
+        return extract_and_parse_json(raw_text)
+    except Exception:
+        return raw_text
