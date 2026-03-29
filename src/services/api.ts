@@ -9,6 +9,12 @@ function parseErrorDetail(detail: any, fallback: string): string {
   return JSON.stringify(detail);
 }
 
+function getStoredSession() {
+  const sessionStr = localStorage.getItem('session')
+  if (!sessionStr) throw new Error('Not authenticated')
+  return JSON.parse(sessionStr)
+}
+
 export async function login(payload: Record<string, any>) {
   const res = await fetch(`${API_BASE_URL}/login`, {
     method: 'POST',
@@ -42,12 +48,8 @@ export async function signup(payload: Record<string, any>) {
 }
 
 export async function getProjects() {
-  const sessionStr = localStorage.getItem('session')
-  if (!sessionStr) throw new Error('Not authenticated')
-  
-  const session = JSON.parse(sessionStr)
-  const ownerId = session.user?.id || ''
-  const res = await fetch(`${API_BASE_URL}/projects?owner_id=${ownerId}`, {
+  const session = getStoredSession()
+  const res = await fetch(`${API_BASE_URL}/projects`, {
     headers: {
       'Authorization': `Bearer ${session.access_token}`
     }
@@ -150,6 +152,40 @@ export async function deleteProject(projectId: string) {
     const error = await res.json().catch(() => ({}))
     throw new Error(parseErrorDetail(error.detail, 'Falla al eliminar proyecto'))
   }
+}
+
+export async function getProjectSimulations(projectId: string) {
+  const session = getStoredSession()
+
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/simulations`, {
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`
+    }
+  })
+
+  if (res.status === 401) throw new Error('Unauthorized')
+  if (!res.ok) throw new Error('Falla al cargar simulaciones')
+  return await res.json()
+}
+
+export async function createProjectSimulation(projectId: string, payload: any) {
+  const session = getStoredSession()
+
+  const res = await fetch(`${API_BASE_URL}/projects/${projectId}/simulations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(payload)
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}))
+    throw new Error(parseErrorDetail(error.detail, 'Falla al crear simulación'))
+  }
+
+  return await res.json()
 }
 
 export async function logout() {

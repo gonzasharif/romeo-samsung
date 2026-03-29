@@ -117,6 +117,7 @@ function App() {
           projectId={projectId}
           onNavigate={navigate}
           copy={copy}
+          locale={locale}
           topControls={topControls}
         />
       </main>

@@ -208,7 +208,7 @@ def get_project_stats(project_id: str, user: User = Depends(get_authenticated_us
 def list_simulations(project_id: str, user: User = Depends(get_authenticated_user)) -> list[SimulationRun]:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
-    resp = supabase.table("simulations").select("*").eq("project_id", project_id).execute()
+    resp = supabase.table("simulation_runs").select("*").eq("project_id", project_id).execute()
     return [SimulationRun(**row) for row in resp.data]
 
 @router.post("/projects/{project_id}/simulations", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
@@ -218,6 +218,7 @@ def create_simulation(project_id: str, payload: SimulationCreate, user: User = D
     
     timestamp = now_utc().isoformat()
     run_data = {
+        "id": new_id("run"),
         "project_id": project_id,
         "scenario_name": payload.scenario_name,
         "provider": payload.provider,
