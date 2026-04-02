@@ -66,29 +66,18 @@ function UserPersonaModal({ copy, persona, onClose, onSave }: UserPersonaModalPr
             </label>
           </div>
 
-          <div className="field-grid project-form-grid">
-            <label className="field">
-              <span>{copy.project.priceLabel}</span>
-              <input
-                type="text"
-                value={draft.price}
-                onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))}
-              />
-            </label>
-
-            <label className="field">
-              <span>{copy.project.sexLabel}</span>
-              <select
-                className="field-select"
-                value={draft.sex}
-                onChange={(event) => setDraft((current) => ({ ...current, sex: event.target.value }))}
-              >
-                <option value="any">{copy.project.any}</option>
-                <option value="female">{copy.project.female}</option>
-                <option value="male">{copy.project.male}</option>
-              </select>
-            </label>
-          </div>
+          <label className="field">
+            <span>{copy.project.sexLabel}</span>
+            <select
+              className="field-select"
+              value={draft.sex}
+              onChange={(event) => setDraft((current) => ({ ...current, sex: event.target.value }))}
+            >
+              <option value="any">{copy.project.any}</option>
+              <option value="female">{copy.project.female}</option>
+              <option value="male">{copy.project.male}</option>
+            </select>
+          </label>
 
           <div className="project-form-footer">
             <button type="button" className="primary-cta" onClick={() => onSave(draft)}>

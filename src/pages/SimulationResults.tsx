@@ -173,7 +173,8 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
         setPersonas(
           (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
         )
-        const summaryText = normalizeSummaryText(simulation.summary || copy.results.noInsights)
+        const normalizedSummary = normalizeSummaryText(simulation.summary)
+        const summaryText = normalizedSummary && normalizedSummary.trim() ? normalizedSummary : copy.results.noInsights
         setResultsData({
           productDescription: projectData.context?.product_description || '',
           summaryText,
