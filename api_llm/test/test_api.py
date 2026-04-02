@@ -150,7 +150,7 @@ def test_ask_model(model_id: str, perfiles: list):
     print(f"\n[+] 4. Ejecutando consultas por perfil (POST /ask_model/{{model_id}})...")
 
     for i, perfil in enumerate(perfiles, 1):
-        print(f"\n      --- Perfil {i}: {perfil.nombre} ---")
+        print(f"\n      --- Perfil {i}: {perfil.name} ---")
 
         perfil_dict = perfil.model_dump()
 
@@ -181,7 +181,7 @@ def test_ask_model(model_id: str, perfiles: list):
                 print(f"      [Falló] Error HTTP: {response.text}")
 
         except Exception as e:
-            print(f"      [!] Excepción en perfil {perfil.nombre}: {e}")
+            print(f"      [!] Excepción en perfil {perfil.name}: {e}")
 
 def test_stop_model(model_id: str):
     """Detiene el modelo activo y libera recursos (VRAM)."""
