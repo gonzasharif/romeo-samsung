@@ -147,56 +147,67 @@ function buildSummarySections(summaryText: string): SimulationResultsSection[] {
 
 function SimulationResults({ projectId, simulationId, copy, onNavigate }: SimulationResultsProps) {
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [resultsData, setResultsData] = useState<SimulationResultsData | null>(null)
   const [personas, setPersonas] = useState<any[]>([])
+  const [hasEmptySummary, setHasEmptySummary] = useState(false)
 
-  useEffect(() => {
-    let isMounted = true
+  const loadResults = async () => {
+    try {
+      const [projectData, simulationsData, modelsData] = await Promise.all([
+        getProject(projectId),
+        getProjectSimulations(projectId),
+        getProjectModels(projectId)
+      ])
 
-    const loadResults = async () => {
-      try {
-        const [projectData, simulationsData, modelsData] = await Promise.all([
-          getProject(projectId),
-          getProjectSimulations(projectId),
-          getProjectModels(projectId)
-        ])
+      const simulation = simulationsData.find((item: any) => item.id === simulationId)
 
-        if (!isMounted) return
-        const simulation = simulationsData.find((item: any) => item.id === simulationId)
-
-        if (!projectData || !simulation) {
-          setResultsData(null)
-          setPersonas([])
-          return
-        }
-
-        setPersonas(
-          (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
-        )
-        const normalizedSummary = normalizeSummaryText(simulation.summary)
-        const summaryText = normalizedSummary && normalizedSummary.trim() ? normalizedSummary : copy.results.noInsights
-        setResultsData({
-          productDescription: projectData.context?.product_description || '',
-          summaryText,
-          sections: buildSummarySections(summaryText),
-        })
-
-      } catch (error) {
-        console.error(error)
-        if (!isMounted) return
+      if (!projectData || !simulation) {
         setResultsData(null)
         setPersonas([])
-      } finally {
-        if (isMounted) setIsLoading(false)
+        return
       }
-    }
 
+      setPersonas(
+        (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
+      )
+      const normalizedSummary = normalizeSummaryText(simulation.summary)
+      const summaryIsEmpty = !normalizedSummary || !normalizedSummary.trim()
+      
+      setHasEmptySummary(summaryIsEmpty)
+      
+      if (summaryIsEmpty) {
+        setResultsData({
+          productDescription: projectData.context?.product_description || '',
+          summaryText: '',
+          sections: [],
+        })
+      } else {
+        setResultsData({
+          productDescription: projectData.context?.product_description || '',
+          summaryText: normalizedSummary,
+          sections: buildSummarySections(normalizedSummary),
+        })
+      }
+
+    } catch (error) {
+      console.error(error)
+      setResultsData(null)
+      setPersonas([])
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
     void loadResults()
-
-    return () => {
-      isMounted = false
-    }
   }, [projectId, simulationId, copy])
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    await loadResults()
+  }
 
   if (isLoading) {
     return (
@@ -269,16 +280,35 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
             <p className="panel-kicker">{copy.results.productDescription}</p>
             <h3>{resultsData.productDescription || '—'}</h3>
           </div>
-          <div className="summary-sections">
-            {resultsData.sections.map((section: any, index: number) => (
-              <article key={`${section.title || 'section'}-${index}`} className="summary-section-card">
-                {section.title ? <h3 className="summary-section-title">{section.title}</h3> : null}
+          
+          {hasEmptySummary ? (
+            <div className="summary-sections">
+              <article className="summary-section-card">
                 <div className="summary-content">
-                  {parseMarkdownToElements(section.content)}
+                  <p className="summary-p">Gathering data...</p>
+                  <button
+                    type="button"
+                    className="primary-cta"
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                  >
+                    {isRefreshing ? 'Refreshing...' : 'Refresh Results'}
+                  </button>
                 </div>
               </article>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="summary-sections">
+              {resultsData.sections.map((section: any, index: number) => (
+                <article key={`${section.title || 'section'}-${index}`} className="summary-section-card">
+                  {section.title ? <h3 className="summary-section-title">{section.title}</h3> : null}
+                  <div className="summary-content">
+                    {parseMarkdownToElements(section.content)}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </article>
 
         {personas.length > 0 && (
