@@ -14,11 +14,11 @@ def parse_income_level(income_str: str) -> Optional[int]:
         return None
         
     normalized = income_str.strip().lower()
-    if normalized == "bajo":
+    if normalized == "low":
         return 0
-    elif normalized == "medio":
+    elif normalized == "medium":
         return 1
-    elif normalized == "alto":
+    elif normalized == "high":
         return 2
     return None
 
@@ -44,20 +44,20 @@ def translate_llm_to_target_model(
     _id = target_id if target_id else str(uuid.uuid4())
     
     # Nombre
-    nombre = llm_data.get("nombre", "Persona Desconocida")
+    nombre = llm_data.get("name", "Unknown Person")
     
     # Edad (Pasada como age_range en TargetModel. Se castea de int a str por el tipado)
-    edad = llm_data.get("edad")
+    edad = llm_data.get("age")
     age_range = str(edad) if edad is not None else None
     
     # Ingresos Económicos
-    nivel_str = llm_data.get("nivel socioeconomico")
+    nivel_str = llm_data.get("socioeconomic_level")
     income_level = parse_income_level(nivel_str)
     
     # Geografía, Savviness y Actitud
     geography = llm_data.get("geography")
     tech_savviness = llm_data.get("tech_savviness")
-    attitude = llm_data.get("personalidad")
+    attitude = llm_data.get("personality")
     
     return TargetModel(
         id=_id,
