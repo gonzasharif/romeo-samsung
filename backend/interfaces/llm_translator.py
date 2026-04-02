@@ -104,13 +104,16 @@ def translate_llm_to_simulation_run(
     _id = simulation_id if simulation_id else str(uuid.uuid4())
     
     # Extraer el summary/respuesta del output de la IA
+    # Solo incluir summary si existe explícitamente, de otra forma dejar vacío
     summary_text = ""
     if isinstance(llm_data, dict):
-        summary_text = llm_data.get("summary", llm_data.get("response", str(llm_data)))
-    elif isinstance(llm_data, list):
-        summary_text = "\n".join(str(item) for item in llm_data)
+        summary_text = llm_data.get("summary", llm_data.get("response", ""))
+    elif isinstance(llm_data, list) and llm_data:
+        # Si es una lista y no está vacía, podría intentar extraer algo significativo
+        summary_text = ""
     else:
-        summary_text = str(llm_data)
+        # Para otros tipos, dejar vacío en lugar de convertir a string
+        summary_text = ""
 
     now = datetime.now(timezone.utc)
     start_time = started_at if started_at else now
