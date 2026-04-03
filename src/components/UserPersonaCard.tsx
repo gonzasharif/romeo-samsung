@@ -26,7 +26,7 @@ function UserPersonaCard({ persona, copy, onEdit, onDelete, hideActions = false 
       <p className="user-persona-summary">{persona.summary}</p>
 
       <div className="user-persona-meta">
-        <span>Edad: {persona.age}</span>
+        <span>{copy.project.userPersonaAge(String(persona.age))}</span>
       </div>
 
       {!hideActions ? (

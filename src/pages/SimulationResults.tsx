@@ -17,7 +17,7 @@ type SimulationResultsProps = {
   onNavigate: (path: RoutePath) => void
 }
 
-function AgentCard({ agent }: { agent: AgentFeedback }) {
+function AgentCard({ agent, copy }: { agent: AgentFeedback, copy: Copy }) {
   const isObj = typeof agent.Feedback === 'object' && agent.Feedback !== null
   const feedback = isObj ? agent.Feedback as AgentFeedbackDetails : null
   
@@ -63,7 +63,7 @@ function AgentCard({ agent }: { agent: AgentFeedback }) {
            </div>
            <div>
              <h3 style={{ margin: 0, fontSize: '1.3rem' }}>{agent.User}</h3>
-             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Agente Simulado IA</span>
+             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{copy.results.simulatedAgent}</span>
            </div>
         </div>
         <div style={{ 
@@ -71,7 +71,7 @@ function AgentCard({ agent }: { agent: AgentFeedback }) {
           background: intentBg, color: intentColor, border: `1px solid ${intentColor}40`,
           boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
         }}>
-          Intención de Compra: {feedback.purchase_interest || 'No detectada'}
+          {copy.results.purchaseIntent}: {feedback.purchase_interest || copy.results.intentNotDetected}
         </div>
       </header>
 
@@ -81,24 +81,24 @@ function AgentCard({ agent }: { agent: AgentFeedback }) {
         position: 'relative'
       }}>
         <span style={{ position: 'absolute', top: '10px', left: '10px', fontSize: '2rem', opacity: 0.1, pointerEvents: 'none' }}>"</span>
-        {feedback.comprehension?.interpretation || feedback.comprehension?.level || 'Sin opinión narrativa registrada.'}
+        {feedback.comprehension?.interpretation || feedback.comprehension?.level || copy.results.noNarrative}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
         <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
-          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>Percepción de Precio</strong>
+          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>{copy.results.priceAcceptance}</strong>
           <span style={{ fontWeight: 500 }}>{feedback.price_perception || '-'}</span>
         </div>
         <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
-          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>Punto Destacado</strong>
+          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>{copy.results.standoutFocus}</strong>
           <span style={{ fontWeight: 500 }}>{feedback.standout_feature || '-'}</span>
         </div>
         <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
-          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>Punto Rechazado</strong>
+          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>{copy.results.rejectedFocus}</strong>
           <span style={{ fontWeight: 500 }}>{feedback.rejected_feature || '-'}</span>
         </div>
         <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
-          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>Recomendación</strong>
+          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>{copy.results.recommendationProbability}</strong>
           <span style={{ fontWeight: 500 }}>{feedback.recommendation_probability || '-'}</span>
         </div>
       </div>
@@ -106,7 +106,7 @@ function AgentCard({ agent }: { agent: AgentFeedback }) {
   )
 }
 
-function AnalyticsDashboard({ personas, agentFeedbacks }: { personas: any[], agentFeedbacks: AgentFeedback[] }) {
+function AnalyticsDashboard({ personas, agentFeedbacks, copy }: { personas: any[], agentFeedbacks: AgentFeedback[], copy: Copy }) {
   // Calcular edad promedio iterando los perfiles de agentes
   let totalAge = 0
   let countAge = 0
@@ -137,44 +137,44 @@ function AnalyticsDashboard({ personas, agentFeedbacks }: { personas: any[], age
   // Estilos de píldoras dinámicas
   return (
     <article className="project-panel" style={{ padding: '32px', marginBottom: '32px', background: 'var(--surface-raised)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-      <h2 style={{ fontSize: '1.25rem', marginBottom: '24px', letterSpacing: '-0.02em' }}>Resumen Analítico</h2>
+      <h2 style={{ fontSize: '1.25rem', marginBottom: '24px', letterSpacing: '-0.02em' }}>{copy.results.analyticalSummary}</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
         
         {/* Progress Bar de Intención de Compra */}
         <div style={{ paddingRight: '20px', borderRight: '1px solid var(--border)' }}>
-           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', fontWeight: 600 }}>Distribución de Intención de Compra</p>
+           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', fontWeight: 600 }}>{copy.results.purchaseIntentDistribution}</p>
            
            <div style={{ display: 'flex', height: '28px', width: '100%', borderRadius: '14px', overflow: 'hidden', marginBottom: '16px', background: 'var(--surface-sunken)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
-              <div style={{ width: `${(intents.high / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #059669 0%, #10B981 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`Alta: ${intents.high}`} />
-              <div style={{ width: `${(intents.medium / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #D97706 0%, #F59E0B 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`Media: ${intents.medium}`} />
-              <div style={{ width: `${(intents.low / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #E11D48 0%, #EF4444 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`Baja: ${intents.low}`} />
-              <div style={{ width: `${(intents.neutral / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #4B5563 0%, #6B7280 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`Neutral: ${intents.neutral}`} />
+              <div style={{ width: `${(intents.high / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #059669 0%, #10B981 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`${copy.results.high}: ${intents.high}`} />
+              <div style={{ width: `${(intents.medium / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #D97706 0%, #F59E0B 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`${copy.results.medium}: ${intents.medium}`} />
+              <div style={{ width: `${(intents.low / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #E11D48 0%, #EF4444 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`${copy.results.low}: ${intents.low}`} />
+              <div style={{ width: `${(intents.neutral / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #4B5563 0%, #6B7280 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`${copy.results.neutral}: ${intents.neutral}`} />
            </div>
 
            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, padding: '0 4px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                  <span style={{ color: '#10B981', fontSize: '1.25rem' }}>{Math.round(intents.high/totalIntents*100)}%</span>
-                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>Alta</span>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>{copy.results.high}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                  <span style={{ color: '#F59E0B', fontSize: '1.25rem' }}>{Math.round(intents.medium/totalIntents*100)}%</span>
-                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>Media</span>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>{copy.results.medium}</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                  <span style={{ color: '#EF4444', fontSize: '1.25rem' }}>{Math.round(intents.low/totalIntents*100)}%</span>
-                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>Baja</span>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>{copy.results.low}</span>
               </div>
            </div>
         </div>
 
         {/* Métrica Global de Edad Promedio */}
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 600 }}>Edad Promedio de Audiencia Testeada</p>
+           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 600 }}>{copy.results.avgAgeAudience}</p>
            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
              <span style={{ fontSize: '4.5rem', fontWeight: '800', color: 'var(--primary)', lineHeight: '1', letterSpacing: '-0.03em' }}>
                {avgAge}
              </span>
-             <span style={{ fontSize: '1.25rem', color: 'var(--text-muted)', fontWeight: 600 }}>años</span>
+             <span style={{ fontSize: '1.25rem', color: 'var(--text-muted)', fontWeight: 600 }}>{copy.results.yearsOld}</span>
            </div>
         </div>
 
@@ -315,7 +315,7 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
         <article className="project-panel summary-panel">
           <div className="project-new-simulation-heading">
             <p className="panel-kicker">{copy.results.insightsTitle}</p>
-            <h2>Desglose de Resultados Individuales</h2>
+            <h2>{copy.results.individualBreakdown}</h2>
           </div>
           <div className="summary-overview">
             <p className="panel-kicker">{copy.results.productDescription}</p>
@@ -326,25 +326,25 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
             <div className="summary-sections">
               <article className="summary-section-card">
                 <div className="summary-content">
-                  <p className="summary-p">La simulación está analizando los datos...</p>
+                  <p className="summary-p">{copy.results.analyzingData}</p>
                   <button
                     type="button"
                     className="primary-cta"
                     onClick={handleRefresh}
                     disabled={isRefreshing}
                   >
-                    {isRefreshing ? 'Actualizando...' : 'Refrescar Progreso'}
+                    {isRefreshing ? copy.results.refreshing : copy.results.refreshProgress}
                   </button>
                 </div>
               </article>
             </div>
           ) : resultsData.agentFeedbacks ? (
             <div className="summary-sections" style={{ marginTop: '40px' }}>
-              <AnalyticsDashboard personas={personas} agentFeedbacks={resultsData.agentFeedbacks} />
+              <AnalyticsDashboard personas={personas} agentFeedbacks={resultsData.agentFeedbacks} copy={copy} />
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {resultsData.agentFeedbacks.map((agent: AgentFeedback, index: number) => (
-                  <AgentCard key={`${agent.User}-${index}`} agent={agent} />
+                  <AgentCard key={`${agent.User}-${index}`} agent={agent} copy={copy} />
                 ))}
               </div>
             </div>
@@ -365,7 +365,7 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
           <article className="project-panel personas-panel">
             <div className="project-new-simulation-heading">
               <p className="panel-kicker">{copy.results.personasTitle}</p>
-              <h2>Contexto de los Participantes</h2>
+              <h2>{copy.results.participantContext}</h2>
             </div>
             <div className="user-persona-list">
               {personas.map((persona) => (

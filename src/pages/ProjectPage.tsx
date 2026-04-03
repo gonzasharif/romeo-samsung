@@ -223,52 +223,52 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
             </div>
             
             <label className="field">
-              <span>Descripción del Producto</span>
+              <span>{copy.project.productDescriptionShortLabel}</span>
               <input
                 type="text"
                 value={form.description}
                 disabled={isPersonasLocked}
                 onChange={(e) => setForm((c) => ({ ...c, description: e.target.value }))}
-                placeholder="Ej. Bebida energizante a base de matcha"
+                placeholder={copy.project.productDescriptionShortPlaceholder}
               />
             </label>
 
             <div className="field-grid project-form-grid">
               <label className="field">
-                <span>Rango de Edad</span>
+                <span>{copy.project.ageRangeLabel}</span>
                 <input
                   type="text"
                   value={form.targetAge}
                   disabled={isPersonasLocked}
                   onChange={(e) => setForm((c) => ({ ...c, targetAge: e.target.value }))}
-                  placeholder="Ej. 18 a 35 años"
+                  placeholder={copy.project.ageRangePlaceholder}
                 />
               </label>
 
               <label className="field">
-                <span>Género</span>
+                <span>{copy.project.sexLabel}</span>
                 <select
                   className="field-select"
                   value={form.targetGender}
                   disabled={isPersonasLocked}
                   onChange={(e) => setForm((c) => ({ ...c, targetGender: e.target.value }))}
                 >
-                  <option value="any">Todos</option>
-                  <option value="female">Mujeres</option>
-                  <option value="male">Hombres</option>
+                  <option value="any">{copy.project.any}</option>
+                  <option value="female">{copy.project.female}</option>
+                  <option value="male">{copy.project.male}</option>
                 </select>
               </label>
             </div>
 
             <div className="field-grid project-form-grid" style={{ gridTemplateColumns: '1fr' }}>
               <label className="field">
-                <span>Precio Sugerido</span>
+                <span>{copy.project.priceLabel}</span>
                 <input
                   type="text"
                   value={form.suggestedPrice}
                   disabled={isPersonasLocked}
                   onChange={(e) => setForm((c) => ({ ...c, suggestedPrice: e.target.value }))}
-                  placeholder="Ej. 15 dólares"
+                  placeholder={copy.project.pricePlaceholder}
                 />
               </label>
             </div>

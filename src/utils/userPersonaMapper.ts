@@ -13,8 +13,8 @@ export type TargetModelApi = {
 function buildSummary(model: TargetModelApi, copy: Copy) {
   const parts = [
     model.occupation || null,
-    model.socioeconomic_level ? `Nivel Socioeconómico: ${model.socioeconomic_level}` : null,
-    model.personality?.length ? `Actitud: ${model.personality.slice(0, 2).join(', ')}` : null,
+    model.socioeconomic_level ? copy.project.userPersonaSocioeconomic(model.socioeconomic_level) : null,
+    model.personality?.length ? copy.project.userPersonaAttitude(model.personality.slice(0, 2).join(', ')) : null,
   ].filter(Boolean)
 
   return parts.join(' · ')

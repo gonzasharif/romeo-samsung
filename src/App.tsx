@@ -33,10 +33,10 @@ function getInitialTheme(): ThemeMode {
 function getInitialLocale(): Locale {
   const storedLocale = window.localStorage.getItem('locale')
   if (storedLocale === 'es' || storedLocale === 'en') {
-    return storedLocale
+    return 'en'
   }
 
-  return navigator.language.toLowerCase().startsWith('en') ? 'en' : 'es'
+  return 'en'
 }
 
 function App() {
