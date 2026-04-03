@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
 from pydantic import BaseModel, ConfigDict, Field
 
 class CompanyProfile(BaseModel):
@@ -20,11 +20,10 @@ class TargetModel(BaseModel):
     id: str
     project_id: str
     name: str
-    age_range: str | None = None
-    income_level: Literal[0, 1, 2] | None = None
-    geography: str | None = None
-    tech_savviness: str | None = None
-    attitude: list[str] = Field(default_factory=list)
+    age: int | None = None
+    occupation: str | None = None
+    socioeconomic_level: str | None = None
+    personality: list[str] = Field(default_factory=list)
 
 class AgentProfile(BaseModel):
     id: str
@@ -36,13 +35,10 @@ class AgentProfile(BaseModel):
     objections: list[str] = Field(default_factory=list)
 
 class ProjectContext(BaseModel):
-    company_summary: str | None = None
-    product_name: str | None = None
-    product_description: str | None = None
-    target_audience: str | None = None
-    pricing_notes: str | None = None
-    market_context: str | None = None
-    category: str | None = None
+    description: str | None = None
+    target_age: str | None = None
+    target_gender: str | None = None
+    suggested_price: str | None = None
 
 class StatsResponse(BaseModel):
     demand_score: Optional[float] = Field(None, ge=0, le=100)
@@ -62,7 +58,7 @@ class SimulationRun(BaseModel):
     agents_snapshot: list[TargetModel]
     started_at: datetime
     completed_at: datetime | None = None
-    summary: dict[str, str | dict[str, str]] | str | list[str] = Field(default_factory=list) 
+    summary: Any = Field(default_factory=list)
 
 class Project(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

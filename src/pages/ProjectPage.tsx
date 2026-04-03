@@ -5,7 +5,6 @@ import type { Copy, Locale } from '../i18n'
 import SimulationCard from '../components/SimulationCard'
 import UserPersonaCard from '../components/UserPersonaCard'
 import type { UserPersona } from '../components/UserPersonaCard'
-import UserPersonaModal from '../modals/UserPersonaModal'
 import {
   getProject,
   updateProject,
@@ -13,6 +12,7 @@ import {
   createProjectSimulation,
   getProjectModels,
   generateProjectModels,
+  deleteProjectModel
 } from '../services/api'
 import { mapTargetModelToUserPersona, type TargetModelApi } from '../utils/userPersonaMapper'
 
@@ -27,35 +27,24 @@ type ProjectPageProps = {
 function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) {
   const newSimulationRef = useRef<HTMLElement | null>(null)
   const userPersonasRef = useRef<HTMLElement | null>(null)
+  
   const [project, setProject] = useState<any>(null)
   const [simulations, setSimulations] = useState<any[]>([])
   const [userPersonas, setUserPersonas] = useState<UserPersona[]>([])
-  const [editingPersona, setEditingPersona] = useState<UserPersona | null>(null)
+  
   const [form, setForm] = useState({
-    productDescription: '',
-    ageRange: '',
-    region: '',
-    price: '',
-    sex: 'any',
+    description: '',
+    targetAge: '',
+    targetGender: 'any',
+    suggestedPrice: ''
   })
+  
   const [isGeneratingPersonas, setIsGeneratingPersonas] = useState(false)
   const [isRunningSimulation, setIsRunningSimulation] = useState(false)
-  const [isFormVisible, setIsFormVisible] = useState(false)
+  const [isFormVisible, setIsFormVisible] = useState(true)
   const [shouldScrollToPersonas, setShouldScrollToPersonas] = useState(false)
+  
   const isPersonasLocked = userPersonas.length > 0
-
-  const buildProjectPayload = () => ({
-    name: project.name,
-    context: {
-      company_summary: project.context?.company_summary || project.name,
-      product_name: project.name,
-      product_description: form.productDescription,
-      target_audience: form.ageRange,
-      pricing_notes: form.price,
-      market_context: form.region,
-      category: form.sex,
-    },
-  })
 
   useEffect(() => {
     let isMounted = true
@@ -67,19 +56,18 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
 
         setProject(projectData)
         setForm({
-          productDescription: projectData.context?.product_description || '',
-          ageRange: projectData.context?.target_audience || '',
-          region: projectData.context?.market_context || '',
-          price: projectData.context?.pricing_notes || '',
-          sex: projectData.context?.category || 'any',
+          description: projectData.context?.description || '',
+          targetAge: projectData.context?.target_age || '',
+          targetGender: projectData.context?.target_gender || 'any',
+          suggestedPrice: projectData.context?.suggested_price || '',
         })
 
         try {
           const simulationsData = await getProjectSimulations(projectId)
           if (!isMounted) return
           setSimulations(simulationsData)
-        } catch (simulationsError) {
-          console.error(simulationsError)
+        } catch (error) {
+          console.error(error)
           if (!isMounted) return
           setSimulations([])
         }
@@ -90,13 +78,13 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
           setUserPersonas(
             (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
           )
-        } catch (modelsError) {
-          console.error(modelsError)
+        } catch (error) {
+          console.error(error)
           if (!isMounted) return
           setUserPersonas([])
         }
-      } catch (projectError) {
-        console.error(projectError)
+      } catch (error) {
+        console.error(error)
         if (!isMounted) return
         onNavigate('/profile')
       }
@@ -111,49 +99,33 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
 
   useEffect(() => {
     if (!isFormVisible || !newSimulationRef.current) return
-
-    newSimulationRef.current.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    })
+    newSimulationRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [isFormVisible])
 
   useEffect(() => {
     if (!shouldScrollToPersonas || userPersonas.length === 0 || !userPersonasRef.current) return
-
-    userPersonasRef.current.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    })
+    userPersonasRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
     setShouldScrollToPersonas(false)
   }, [userPersonas, shouldScrollToPersonas])
 
   const handleGeneratePersonas = async () => {
     if (!project) return
-
     setIsGeneratingPersonas(true)
+    
     try {
-      const projectPayload = buildProjectPayload()
-      const optimisticProject = {
-        ...project,
-        ...projectPayload,
+      const projectPayload = {
+        name: project.name,
         context: {
-          ...project.context,
-          ...projectPayload.context,
-        },
+          description: form.description,
+          target_age: form.targetAge,
+          target_gender: form.targetGender,
+          suggested_price: form.suggestedPrice
+        }
       }
 
-      let updatedProject = optimisticProject
-      updatedProject = await updateProject(projectId, projectPayload)
+      await updateProject(projectId, projectPayload)
+      await generateProjectModels(projectId)
 
-      // Call the LLM to generate models for this project
-      const prompt = `Descripción: ${form.productDescription}. Audiencia: ${form.ageRange}. Región: ${form.region}. Precio: ${form.price}. Sexo: ${form.sex}.`
-      
-      await generateProjectModels(projectId, { 
-        prompt: prompt 
-      })
-
-      setProject(updatedProject)
       const modelsData = await getProjectModels(projectId)
       setUserPersonas(
         (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
@@ -166,25 +138,26 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
     }
   }
 
+  const handleDeletePersona = async (personaId: string) => {
+    try {
+      await deleteProjectModel(projectId, personaId)
+      setUserPersonas((current) => current.filter((p) => p.id !== personaId))
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   const handleRunSimulation = async () => {
     if (!project || userPersonas.length === 0) return
-
     setIsRunningSimulation(true)
+    
     try {
       const newSimulation = await createProjectSimulation(projectId, {
         scenario_name: `${project.name} · ${new Date().toLocaleString()}`,
         questions: [],
-        overrides: {
-          product_description: form.productDescription,
-          age_range: form.ageRange,
-          region: form.region,
-          price: form.price,
-          sex: form.sex,
-        },
         provider: 'mock',
       })
-      setSimulations((currentSimulations) => [newSimulation, ...currentSimulations])
+      setSimulations((current) => [newSimulation, ...current])
       onNavigate(`/project/${projectId}/results/${newSimulation.id}`)
     } catch (error: any) {
       alert(error.message)
@@ -223,11 +196,6 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
             <p className="panel-kicker">{copy.project.simulationsTag}</p>
             <h2>{copy.project.simulationsTitle}</h2>
           </div>
-          {simulations.length > 0 ? (
-            <button type="button" className="secondary-button" onClick={() => setIsFormVisible(true)}>
-              {copy.project.newSimulation}
-            </button>
-          ) : null}
         </div>
 
         {simulations.length > 0 ? (
@@ -245,104 +213,63 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
         ) : (
           <div className="empty-projects project-empty-simulations">
             <h3>{copy.project.noSimulationsYet}</h3>
-            <button type="button" className="primary-cta" onClick={() => setIsFormVisible(true)}>
-              {copy.project.newSimulation}
-            </button>
           </div>
         )}
 
-        {isFormVisible ? (
-          <section ref={newSimulationRef} className="project-form project-form-panel">
+        <section ref={newSimulationRef} className="project-form project-form-panel">
             <div className="project-new-simulation-heading">
               <p className="panel-kicker">{copy.project.newSimulationTag}</p>
               <h2>{copy.project.newSimulationHeading}</h2>
             </div>
+            
             <label className="field">
-              <span>{copy.project.productDescriptionShortLabel}</span>
+              <span>Descripción del Producto</span>
               <input
                 type="text"
-                maxLength={50}
-                value={form.productDescription}
+                value={form.description}
                 disabled={isPersonasLocked}
-                onChange={(event) =>
-                  setForm((currentForm) => ({
-                    ...currentForm,
-                    productDescription: event.target.value,
-                  }))
-                }
-                placeholder={copy.project.productDescriptionShortPlaceholder}
+                onChange={(e) => setForm((c) => ({ ...c, description: e.target.value }))}
+                placeholder="Ej. Bebida energizante a base de matcha"
               />
-              <small className="field-hint">{form.productDescription.length}/50</small>
             </label>
 
             <div className="field-grid project-form-grid">
               <label className="field">
-                <span>{copy.project.ageRangeLabel}</span>
+                <span>Rango de Edad</span>
                 <input
                   type="text"
-                  value={form.ageRange}
+                  value={form.targetAge}
                   disabled={isPersonasLocked}
-                  onChange={(event) =>
-                    setForm((currentForm) => ({
-                      ...currentForm,
-                      ageRange: event.target.value,
-                    }))
-                  }
-                  placeholder={copy.project.ageRangePlaceholder}
+                  onChange={(e) => setForm((c) => ({ ...c, targetAge: e.target.value }))}
+                  placeholder="Ej. 18 a 35 años"
                 />
               </label>
 
               <label className="field">
-                <span>{copy.project.regionLabel}</span>
-                <input
-                  type="text"
-                  value={form.region}
+                <span>Género</span>
+                <select
+                  className="field-select"
+                  value={form.targetGender}
                   disabled={isPersonasLocked}
-                  onChange={(event) =>
-                    setForm((currentForm) => ({
-                      ...currentForm,
-                      region: event.target.value,
-                    }))
-                  }
-                  placeholder={copy.project.regionPlaceholder}
-                />
+                  onChange={(e) => setForm((c) => ({ ...c, targetGender: e.target.value }))}
+                >
+                  <option value="any">Todos</option>
+                  <option value="female">Mujeres</option>
+                  <option value="male">Hombres</option>
+                </select>
               </label>
             </div>
 
-            <div className="field-grid project-form-grid">
+            <div className="field-grid project-form-grid" style={{ gridTemplateColumns: '1fr' }}>
               <label className="field">
-                <span>{copy.project.priceLabel}</span>
+                <span>Precio Sugerido</span>
                 <input
                   type="text"
-                  value={form.price}
+                  value={form.suggestedPrice}
                   disabled={isPersonasLocked}
-                  onChange={(event) =>
-                    setForm((currentForm) => ({
-                      ...currentForm,
-                      price: event.target.value,
-                    }))
-                  }
-                  placeholder={copy.project.pricePlaceholder}
+                  onChange={(e) => setForm((c) => ({ ...c, suggestedPrice: e.target.value }))}
+                  placeholder="Ej. 15 dólares"
                 />
-              </label>
-
-              <label className="field">
-                <span>{copy.project.sexLabel}</span>
-                <select
-                  className="field-select"
-                  value={form.sex}
-                  disabled={isPersonasLocked}
-                  onChange={(event) =>
-                    setForm((currentForm) => ({
-                      ...currentForm,
-                      sex: event.target.value,
-                    }))
-                  }
-                >
-                  <option value="any">{copy.project.any}</option>
-                  <option value="female">{copy.project.female}</option>
-                  <option value="male">{copy.project.male}</option>
-                </select>
               </label>
             </div>
 
@@ -359,7 +286,6 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
               </div>
             ) : null}
           </section>
-        ) : null}
 
         {userPersonas.length > 0 ? (
           <section ref={userPersonasRef} className="user-personas-section">
@@ -374,12 +300,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
                   key={persona.id}
                   persona={persona}
                   copy={copy}
-                  onEdit={(selectedPersona) => setEditingPersona(selectedPersona)}
-                  onDelete={(personaId) =>
-                    setUserPersonas((currentPersonas) =>
-                      currentPersonas.filter((persona) => persona.id !== personaId),
-                    )
-                  }
+                  onDelete={handleDeletePersona}
                 />
               ))}
             </div>
@@ -397,22 +318,6 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
           </section>
         ) : null}
       </section>
-
-      {editingPersona ? (
-        <UserPersonaModal
-          copy={copy}
-          persona={editingPersona}
-          onClose={() => setEditingPersona(null)}
-          onSave={(updatedPersona) => {
-            setUserPersonas((currentPersonas) =>
-              currentPersonas.map((persona) =>
-                persona.id === updatedPersona.id ? updatedPersona : persona,
-              ),
-            )
-            setEditingPersona(null)
-          }}
-        />
-      ) : null}
     </section>
   )
 }

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, status, Response, HTTPException
 import json
-from models.domain import Project, AgentProfile, TargetModel, SimulationRun, StatsResponse, User
-from schemas.requests import ProjectCreate, ProjectUpdate, AgentCreate, TargetModelCreate, SimulationCreate, TargetModelUpdate, AgentUpdate
+from models.domain import Project, TargetModel, SimulationRun, StatsResponse, User
+from schemas.requests import ProjectCreate, ProjectUpdate, TargetModelCreate, SimulationCreate, TargetModelUpdate
 from utils.common import now_utc
 from services.auth_service import get_authenticated_user, get_project_or_404, assert_project_owner
 from utils.supabase_client import supabase
-from services.api_llm_service import start_model, ask_model,stop_model
+from services.api_llm_service import start_model, ask_model, stop_model, create_people_model
 import asyncio
 import uuid
 
@@ -16,9 +16,6 @@ def normalize_simulation_row(row: dict) -> dict:
 
     if normalized.get("questions") is None:
         normalized["questions"] = []
-
-    if normalized.get("overrides") is None:
-        normalized["overrides"] = {}
 
     agents_snapshot = normalized.get("agents_snapshot")
     if agents_snapshot is None:
@@ -31,7 +28,7 @@ def normalize_simulation_row(row: dict) -> dict:
 
     summary = normalized.get("summary")
     if summary is None:
-        normalized["summary"] = ""
+        normalized["summary"] = []
 
     return normalized
 
@@ -55,7 +52,7 @@ def create_project(
     p_data = {
         "owner_id": user.id,
         "name": payload.name,
-        "context": {},
+        "context": payload.context.model_dump() if payload.context else {},
         "stats": {},
         "created_at": timestamp,
         "updated_at": timestamp,
@@ -93,14 +90,10 @@ def delete_project(
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     
-    #supabase.table("simulations").delete().eq("project_id", project_id).execute()
-    #supabase.table("agent_profiles").delete().eq("project_id", project_id).execute()
-    #supabase.table("target_models").delete().eq("project_id", project_id).execute()
     supabase.table("projects").delete().eq("id", project_id).execute()
-    
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-# --- Target Models Sub-resources ---
+# --- Target Models (User Agents) Sub-resources ---
 
 @router.get("/projects/{project_id}/models", response_model=list[TargetModel])
 def list_project_models(project_id: str, user: User = Depends(get_authenticated_user)) -> list[TargetModel]:
@@ -109,124 +102,32 @@ def list_project_models(project_id: str, user: User = Depends(get_authenticated_
     resp = supabase.table("target_models").select("*").eq("project_id", project_id).execute()
     return [TargetModel(**row) for row in resp.data]
 
-@router.post("/projects/{project_id}/models", response_model=TargetModel, status_code=status.HTTP_201_CREATED)
-def add_project_model(project_id: str, payload: TargetModelCreate, user: User = Depends(get_authenticated_user)) -> TargetModel:
+@router.post("/projects/{project_id}/generate_agents", response_model=list[TargetModel], status_code=status.HTTP_201_CREATED)
+def generate_project_agents(project_id: str, user: User = Depends(get_authenticated_user)) -> list[TargetModel]:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     
-    tmodel_data = {
-         "project_id": project_id,
-         **payload.model_dump()
-    }
-    resp = supabase.table("target_models").insert(tmodel_data).execute()
-    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
-    return TargetModel(**resp.data[0])
-
-@router.put("/projects/{project_id}/models/{model_id}", response_model=TargetModel)
-def update_project_model(project_id: str, model_id: str, payload: TargetModelUpdate, user: User = Depends(get_authenticated_user)) -> TargetModel:
-    project = get_project_or_404(project_id)
-    assert_project_owner(project, user)
+    ctx = project.context
+    desc = ctx.description if ctx and ctx.description else "No description"
+    age = ctx.target_age if ctx and ctx.target_age else "Any"
+    gender = ctx.target_gender if ctx and ctx.target_gender else "Any"
+    price = ctx.suggested_price if ctx and ctx.suggested_price else "Any"
     
-    update_data = payload.model_dump(exclude_unset=True)
-    if not update_data:
-        resp = supabase.table("target_models").select("*").eq("id", model_id).eq("project_id", project_id).execute()
-        if not resp.data: raise HTTPException(status_code=404, detail="Model not found")
-        return TargetModel(**resp.data[0])
-        
-    resp = supabase.table("target_models").update(update_data).eq("id", model_id).eq("project_id", project_id).execute()
-    if not resp.data:
-        raise HTTPException(status_code=404, detail="Model not found")
-        
-    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
-    return TargetModel(**resp.data[0])
+    prompt = f"Product: {desc}. Audience: {age}. Gender: {gender}. Price: {price}."
+    
+    payload = {"prompt": prompt, "project_id": project_id}
+    data = asyncio.run(create_people_model(payload))
+    
+    return data.get("saved_models", [])
 
 @router.delete("/projects/{project_id}/models/{model_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_project_model(project_id: str, model_id: str, user: User = Depends(get_authenticated_user)) -> Response:
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     
-    supabase.table("agent_profiles").delete().eq("model_id", model_id).eq("project_id", project_id).execute()
     supabase.table("target_models").delete().eq("id", model_id).eq("project_id", project_id).execute()
-    
     supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-# --- Agents Sub-resources ---
-
-@router.get("/projects/{project_id}/agents", response_model=list[AgentProfile])
-def list_project_agents(project_id: str, user: User = Depends(get_authenticated_user)):
-    project = get_project_or_404(project_id)
-    assert_project_owner(project, user)
-
-    resp = (
-        supabase.table("agent_profiles")
-        .select("*, target_models!inner(project_id)")
-        .eq("target_models.project_id", project_id)
-        .execute()
-    )
-
-    agents = []
-    for row in resp.data:
-        agents.append(AgentProfile(**row))
-
-    return agents
-
-@router.post("/projects/{project_id}/agents", response_model=AgentProfile, status_code=status.HTTP_201_CREATED)
-def add_project_agent(project_id: str, payload: AgentCreate, user: User = Depends(get_authenticated_user)) -> AgentProfile:
-    project = get_project_or_404(project_id)
-    assert_project_owner(project, user)
-    
-    tm_resp = supabase.table("target_models").select("id").eq("id", payload.model_id).eq("project_id", project_id).execute()
-    if not tm_resp.data:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="model_id no fue encontrado en este proyecto")
-        
-    agent_data = {
-         "project_id": project_id,
-         **payload.model_dump()
-    }
-    resp = supabase.table("agent_profiles").insert(agent_data).execute()
-    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
-    return AgentProfile(**resp.data[0])
-
-@router.put("/projects/{project_id}/agents/{agent_id}", response_model=AgentProfile)
-def update_project_agent(project_id: str, agent_id: str, payload: AgentUpdate, user: User = Depends(get_authenticated_user)) -> AgentProfile:
-    project = get_project_or_404(project_id)
-    assert_project_owner(project, user)
-    
-    update_data = payload.model_dump(exclude_unset=True)
-    if "model_id" in update_data:
-        tm_resp = supabase.table("target_models").select("id").eq("id", payload.model_id).eq("project_id", project_id).execute()
-        if not tm_resp.data:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="model_id no fue encontrado en este proyecto")
-            
-    if not update_data:
-        resp = supabase.table("agent_profiles").select("*").eq("id", agent_id).eq("project_id", project_id).execute()
-        if not resp.data: raise HTTPException(status_code=404, detail="Agent not found")
-        return AgentProfile(**resp.data[0])
-        
-    resp = supabase.table("agent_profiles").update(update_data).eq("id", agent_id).eq("project_id", project_id).execute()
-    if not resp.data:
-        raise HTTPException(status_code=404, detail="Agent not found")
-        
-    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
-    return AgentProfile(**resp.data[0])
-
-@router.delete("/projects/{project_id}/agents/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_project_agent(project_id: str, agent_id: str, user: User = Depends(get_authenticated_user)) -> Response:
-    project = get_project_or_404(project_id)
-    assert_project_owner(project, user)
-    
-    supabase.table("agent_profiles").delete().eq("id", agent_id).eq("project_id", project_id).execute()
-    supabase.table("projects").update({"updated_at": now_utc().isoformat()}).eq("id", project_id).execute()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-# --- Stats Sub-resources ---
-
-@router.get("/projects/{project_id}/stats", response_model=StatsResponse)
-def get_project_stats(project_id: str, user: User = Depends(get_authenticated_user)) -> StatsResponse:
-    project = get_project_or_404(project_id)
-    assert_project_owner(project, user)
-    return project.stats
 
 # --- Simulations Sub-resources ---
 
@@ -239,14 +140,10 @@ def list_simulations(project_id: str, user: User = Depends(get_authenticated_use
 
 @router.post("/projects/{project_id}/simulations", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
 def create_simulation(project_id: str, payload: SimulationCreate, user: User = Depends(get_authenticated_user)) -> SimulationRun:
-
     project = get_project_or_404(project_id)
     assert_project_owner(project, user)
     
     timestamp = now_utc().isoformat()
-    
-    summary_lines = []
-    summary_lines.append(f"Simulación ejecutada el {timestamp}")
 
     agents = list_project_models(project_id, user)
     run_data = {
@@ -256,44 +153,61 @@ def create_simulation(project_id: str, payload: SimulationCreate, user: User = D
         "provider": payload.provider,
         "status": 2,
         "questions": payload.questions,
-        "overrides": payload.overrides,
+        "overrides": {},
         "agents_snapshot": [agent.model_dump() for agent in agents],
         "started_at": timestamp,
         "completed_at": timestamp,
-        "summary": "\n".join(summary_lines)
+        "summary": [] # Initially empty array
     }
+    
+    # Store initial simulation run in database
     supabase.table("simulation_runs").insert(run_data).execute()
 
-    print(agents)
-    model = asyncio.run(start_model({"model_name": "gemma-3-4b-it-Q4_K_M.gguf", "agent_context": ""}))
+    # Generate complete context for the product
+    ctx = project.context
+    product_desc = ctx.description if ctx and ctx.description else ""
+    age_range = ctx.target_age if ctx and ctx.target_age else ""
+    sex = ctx.target_gender if ctx and ctx.target_gender else ""
+    price = ctx.suggested_price if ctx and ctx.suggested_price else ""
+    
+    agent_context = (
+        f"Description: {product_desc}. "
+        f"Audience: {age_range}. "
+        f"Gender: {sex}. "
+        f"Price: {price}."
+    )
 
-    print(model)
+    model = asyncio.run(start_model({"model_name": "gemma-3-4b-it-Q4_K_M.gguf", "agent_context": agent_context}))
+
+    agent_responses = []
 
     for agent in agents:
-        summary_lines.append(f"\n### Respuestas de {agent.name}")
+        agent_dict = agent.model_dump()
+        prompt_json = json.dumps(agent_dict, ensure_ascii=False)
+        
         ask_payload = {
-                "model_id": model["model_id"],
-                "prompt": "",
-                "project_id": project_id,
-                "scenario_name": payload.scenario_name,
-                "provider": payload.provider,
-                "questions": payload.questions,
-                "overrides": payload.overrides,
-                "agents_snapshot": [agent.model_dump() for agent in project.agents],
-            }
+            "model_id": model.get("model_id"),
+            "prompt": prompt_json
+            # Note: project_id is omitted so ask_model ignores redundant inserts
+        }
         answer_data = asyncio.run(ask_model(ask_payload))
-        answer_text = answer_data.get("response", "Sin respuesta.")
+        resp_json = answer_data.get("response", {"error": "Sin respuesta"})
+        
+        agent_responses.append({
+            "User": agent.name,
+            "Feedback": resp_json
+        })
    
-    asyncio.run(stop_model(model["model_id"]))
+    asyncio.run(stop_model(model.get("model_id")))
 
+    # Update row with the final summary
+    supabase.table("simulation_runs").update({
+        "summary": agent_responses,
+        "completed_at": now_utc().isoformat()
+    }).eq("id", run_data["id"]).execute()
+
+    # Touch project's updated_at
     supabase.table("projects").update({"updated_at": timestamp}).eq("id", project_id).execute()
 
+    run_data["summary"] = agent_responses
     return SimulationRun(**normalize_simulation_row(run_data))
-
-@router.post("/projects/{project_id}/runs", response_model=SimulationRun, status_code=status.HTTP_202_ACCEPTED)
-def create_run_alias(project_id: str, payload: SimulationCreate, user: User = Depends(get_authenticated_user)) -> SimulationRun:
-    return create_simulation(project_id, payload, user=user)
-
-@router.get("/projects/{project_id}/runs", response_model=list[SimulationRun])
-def list_runs_alias(project_id: str, user: User = Depends(get_authenticated_user)) -> list[SimulationRun]:
-    return list_simulations(project_id, user=user)

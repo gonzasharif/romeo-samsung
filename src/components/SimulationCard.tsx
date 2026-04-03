@@ -66,7 +66,9 @@ function SimulationCard({ simulation, copy, locale, onClick }: SimulationCardPro
       </div>
 
       <p className="simulation-card-summary">
-        {simulation.summary || copy.project.simulationNoSummary}
+        {Array.isArray(simulation.summary) 
+          ? `Resultados de ${simulation.summary.length} encuestas simuladas.` 
+          : (simulation.summary || copy.project.simulationNoSummary)}
       </p>
     </article>
   )

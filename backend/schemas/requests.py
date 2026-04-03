@@ -27,11 +27,10 @@ class ProjectUpdate(BaseModel):
 
 class TargetModelCreate(BaseModel):
     name: str
-    age_range: str | None = None
-    income_level: Literal[0, 1, 2] | None = None
-    geography: str | None = None
-    tech_savviness: str | None = None
-    attitude: str | None = None
+    age: int | None = None
+    occupation: str | None = None
+    socioeconomic_level: str | None = None
+    personality: list[str] = Field(default_factory=list)
 
 class AgentCreate(BaseModel):
     name: str
@@ -42,11 +41,10 @@ class AgentCreate(BaseModel):
 
 class TargetModelUpdate(BaseModel):
     name: str | None = None
-    age_range: str | None = None
-    income_level: Literal[0, 1, 2] | None = None
-    geography: str | None = None
-    tech_savviness: Literal[0, 1, 2] | None = None
-    attitude: Literal[0, 1, 2, 3] | None = None
+    age: int | None = None
+    occupation: str | None = None
+    socioeconomic_level: str | None = None
+    personality: list[str] | None = None
 
 class AgentUpdate(BaseModel):
     model_id: str | None = None
@@ -59,5 +57,4 @@ class AgentUpdate(BaseModel):
 class SimulationCreate(BaseModel):
     scenario_name: str
     questions: list[str] = Field(default_factory=list)
-    overrides: dict[str, str | int | float | bool] = Field(default_factory=dict)
     provider: Literal["openai", "gemini", "claude", "mock"] = "mock"

@@ -4,10 +4,7 @@ export type UserPersona = {
   id: string
   name: string
   summary: string
-  ageRange: string
-  region: string
-  price: string
-  sex: string
+  age: number | string
 }
 
 type UserPersonaCardProps = {
@@ -29,20 +26,11 @@ function UserPersonaCard({ persona, copy, onEdit, onDelete, hideActions = false 
       <p className="user-persona-summary">{persona.summary}</p>
 
       <div className="user-persona-meta">
-        <span>{copy.project.userPersonaAge(persona.ageRange)}</span>
-        <span>{copy.project.userPersonaRegion(persona.region)}</span>
-        <span>{copy.project.userPersonaSex(persona.sex)}</span>
+        <span>Edad: {persona.age}</span>
       </div>
 
       {!hideActions ? (
         <div className="user-persona-actions">
-          <button
-            type="button"
-            className="secondary-button persona-action-button"
-            onClick={() => onEdit?.(persona)}
-          >
-            {copy.project.userPersonaEdit}
-          </button>
           <button
             type="button"
             className="project-delete-button persona-action-button"
