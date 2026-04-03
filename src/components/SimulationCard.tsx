@@ -32,6 +32,25 @@ function getStatusLabel(status: number, copy: Copy) {
   return copy.project.simulationCompleted
 }
 
+function extractNameFromSummary(summary: unknown): string {
+  if (!summary) return ''
+  
+  try {
+    if (typeof summary === 'string') {
+      const parsed = JSON.parse(summary)
+      if (parsed && typeof parsed === 'object' && 'name' in parsed) {
+        return String(parsed.name)
+      }
+    } else if (typeof summary === 'object' && summary !== null && 'name' in summary) {
+      return String((summary as Record<string, any>).name)
+    }
+  } catch {
+    // Not JSON, return empty
+  }
+  
+  return ''
+}
+
 function SimulationCard({ simulation, copy, locale, onClick }: SimulationCardProps) {
   const isClickable = typeof onClick === 'function'
 
@@ -66,7 +85,7 @@ function SimulationCard({ simulation, copy, locale, onClick }: SimulationCardPro
       </div>
 
       <p className="simulation-card-summary">
-        {simulation.summary || copy.project.simulationNoSummary}
+        {extractNameFromSummary(simulation.summary) || copy.project.simulationNoSummary}
       </p>
     </article>
   )
