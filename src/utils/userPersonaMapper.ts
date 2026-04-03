@@ -4,18 +4,17 @@ import type { UserPersona } from '../components/UserPersonaCard'
 export type TargetModelApi = {
   id: string
   name: string
-  age_range?: string | null
-  geography?: string | null
-  income_level?: number | null
-  tech_savviness?: string | null
-  attitude?: string | null
+  age?: number | null
+  occupation?: string | null
+  socioeconomic_level?: string | null
+  personality?: string[] | null
 }
 
 function buildSummary(model: TargetModelApi, copy: Copy) {
   const parts = [
-    model.income_level != null ? copy.project.userPersonaIncome(model.income_level) : null,
-    model.tech_savviness || null,
-    model.attitude || null,
+    model.occupation || null,
+    model.socioeconomic_level ? copy.project.userPersonaSocioeconomic(model.socioeconomic_level) : null,
+    model.personality?.length ? copy.project.userPersonaAttitude(model.personality.slice(0, 2).join(', ')) : null,
   ].filter(Boolean)
 
   return parts.join(' · ')
@@ -26,9 +25,6 @@ export function mapTargetModelToUserPersona(model: TargetModelApi, copy: Copy): 
     id: model.id,
     name: model.name,
     summary: buildSummary(model, copy),
-    ageRange: model.age_range || '',
-    region: model.geography || '',
-    price: '',
-    sex: '',
+    age: model.age || 'Unknown',
   }
 }

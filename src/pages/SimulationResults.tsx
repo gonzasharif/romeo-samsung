@@ -8,7 +8,7 @@ import {
   getProjectSimulations,
 } from '../services/api'
 import { mapTargetModelToUserPersona, type TargetModelApi } from '../utils/userPersonaMapper'
-import type { SimulationResultsData, SimulationResultsSection } from '../types/simulationResults'
+import type { SimulationResultsData, AgentFeedback, AgentFeedbackDetails } from '../types/simulationResults'
 
 type SimulationResultsProps = {
   projectId: string
@@ -17,185 +17,238 @@ type SimulationResultsProps = {
   onNavigate: (path: RoutePath) => void
 }
 
-function parseInline(text: string) {
-  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/g)
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="summary-strong">{part.slice(2, -2)}</strong>
-    }
-    if (part.startsWith('*') && part.endsWith('*')) {
-      return <em key={i} className="summary-em">{part.slice(1, -1)}</em>
-    }
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return <code key={i} className="summary-code">{part.slice(1, -1)}</code>
-    }
-    return <span key={i}>{part}</span>
-  })
-}
-
-function parseMarkdownToElements(text: string) {
-  if (!text) return null
-  const blocks = text.split('\n\n').filter(b => b.trim())
+function AgentCard({ agent, copy }: { agent: AgentFeedback, copy: Copy }) {
+  const isObj = typeof agent.Feedback === 'object' && agent.Feedback !== null
+  const feedback = isObj ? agent.Feedback as AgentFeedbackDetails : null
   
-  return blocks.map((block, i) => {
-    if (block.startsWith('- ') || block.startsWith('* ')) {
-      const items = block.split('\n').filter(line => line.trim().startsWith('- ') || line.trim().startsWith('* '))
-      return (
-        <ul key={i} className="summary-list">
-          {items.map((item, j) => {
-            const content = item.replace(/^[-*]\s+/, '')
-            return <li key={j}>{parseInline(content)}</li>
-          })}
-        </ul>
-      )
+  if (!feedback) {
+     return (
+       <article className="project-panel" style={{ padding: '24px', marginBottom: '16px' }}>
+         <h3 style={{ marginBottom: '12px' }}>{agent.User}</h3>
+         <p style={{ color: 'var(--text-muted)' }}>
+            {typeof agent.Feedback === 'string' ? agent.Feedback : JSON.stringify(agent.Feedback)}
+         </p>
+       </article>
+     )
+  }
+
+  // Visual cues based on purchase interest
+  let intentColor = 'var(--text-muted)'
+  let intentBg = 'var(--surface-sunken)'
+  const rawIntent = (feedback.purchase_interest || '').toLowerCase()
+  if (rawIntent.includes('high') || rawIntent.includes('alta')) {
+    intentColor = '#047857' // Green
+    intentBg = '#D1FAE5'
+  } else if (rawIntent.includes('low') || rawIntent.includes('baja')) {
+    intentColor = '#BE123C' // Red
+    intentBg = '#FFE4E6'
+  } else if (rawIntent.includes('medium') || rawIntent.includes('media')) {
+    intentColor = '#B45309' // Orange
+    intentBg = '#FEF3C7'
+  }
+
+  return (
+    <article className="project-panel" style={{ 
+      padding: '32px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '20px',
+      borderLeft: `4px solid ${intentColor !== 'var(--text-muted)' ? intentColor : 'var(--primary)'}`
+    }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+           <div style={{ 
+             width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, #1E3A8A 100%)', 
+             display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem',
+             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+           }}>
+             {agent.User.slice(0, 1).toUpperCase()}
+           </div>
+           <div>
+             <h3 style={{ margin: 0, fontSize: '1.3rem' }}>{agent.User}</h3>
+             <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{copy.results.simulatedAgent}</span>
+           </div>
+        </div>
+        <div style={{ 
+          padding: '8px 16px', borderRadius: '50px', fontSize: '0.9rem', fontWeight: 600,
+          background: intentBg, color: intentColor, border: `1px solid ${intentColor}40`,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+        }}>
+          {copy.results.purchaseIntent}: {feedback.purchase_interest || copy.results.intentNotDetected}
+        </div>
+      </header>
+
+      <div style={{ 
+        padding: '24px', background: 'var(--surface-sunken)', borderRadius: '12px', 
+        fontStyle: 'italic', fontSize: '1.1rem', lineHeight: '1.6', color: 'var(--text)',
+        position: 'relative'
+      }}>
+        <span style={{ position: 'absolute', top: '10px', left: '10px', fontSize: '2rem', opacity: 0.1, pointerEvents: 'none' }}>"</span>
+        {feedback.comprehension?.interpretation || feedback.comprehension?.level || copy.results.noNarrative}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+        <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
+          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>{copy.results.priceAcceptance}</strong>
+          <span style={{ fontWeight: 500 }}>{feedback.price_perception || '-'}</span>
+        </div>
+        <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
+          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>{copy.results.standoutFocus}</strong>
+          <span style={{ fontWeight: 500 }}>{feedback.standout_feature || '-'}</span>
+        </div>
+        <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
+          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>{copy.results.rejectedFocus}</strong>
+          <span style={{ fontWeight: 500 }}>{feedback.rejected_feature || '-'}</span>
+        </div>
+        <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '10px', border: '1px solid var(--border)' }}>
+          <strong style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '8px' }}>{copy.results.recommendationProbability}</strong>
+          <span style={{ fontWeight: 500 }}>{feedback.recommendation_probability || '-'}</span>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function AnalyticsDashboard({ personas, agentFeedbacks, copy }: { personas: any[], agentFeedbacks: AgentFeedback[], copy: Copy }) {
+  // Calcular edad promedio iterando los perfiles de agentes
+  let totalAge = 0
+  let countAge = 0
+  personas.forEach(p => {
+    const a = parseInt(String(p.age).replace(/\D/g, ''), 10)
+    if (!isNaN(a)) {
+      totalAge += a
+      countAge++
     }
-    
-    if (block.startsWith('### ')) return <h4 key={i} className="summary-h4">{parseInline(block.slice(4))}</h4>
-    if (block.startsWith('## ')) return <h3 key={i} className="summary-h3">{parseInline(block.slice(3))}</h3>
-    if (block.startsWith('# ')) return <h2 key={i} className="summary-h2">{parseInline(block.slice(2))}</h2>
-    
-    return <p key={i} className="summary-p">{parseInline(block)}</p>
   })
-}
+  const avgAge = countAge > 0 ? Math.round(totalAge / countAge) : '?'
 
-const KEY_LABELS: Record<string, string> = {
-  pricePerception: "Percepción de Precio",
-  purchaseIntent: "Intención de Compra",
-  demandSignal: "Señal de Demanda",
-  messageClarity: "Claridad del Mensaje",
-  insights: "Desglose Cualitativo"
-}
+  // Contar frecuencias de intención
+  const intents = { high: 0, medium: 0, low: 0, neutral: 0 }
+  const totalIntents = agentFeedbacks.length || 1
+  
+  agentFeedbacks.forEach(agent => {
+    const isObj = typeof agent.Feedback === 'object' && agent.Feedback !== null
+    const feedback = isObj ? agent.Feedback as AgentFeedbackDetails : null
+    const rawIntent = (feedback?.purchase_interest || '').toLowerCase()
+    
+    if (rawIntent.includes('high') || rawIntent.includes('alta') || rawIntent.includes('muy alta')) intents.high++
+    else if (rawIntent.includes('low') || rawIntent.includes('baja') || rawIntent.includes('muy baja')) intents.low++
+    else if (rawIntent.includes('medium') || rawIntent.includes('media')) intents.medium++
+    else intents.neutral++
+  })
 
-function normalizeSummaryText(summary: unknown): string {
-  if (typeof summary === 'string') {
-    try {
-      const parsed = JSON.parse(summary)
-      if (parsed && typeof parsed === 'object') {
-        return normalizeSummaryText(parsed)
-      }
-    } catch {
-      // Not JSON, just regular Markdown/Text summary.
-    }
-    return summary
-  }
-
-  if (Array.isArray(summary)) {
-    return summary.map((item) => normalizeSummaryText(item)).join('\n\n---\n\n')
-  }
-
-  if (summary && typeof summary === 'object') {
-    return Object.entries(summary)
-      .map(([key, value]) => {
-        const label = KEY_LABELS[key] || key
-
-        if (Array.isArray(value)) {
-          const listText = value.map(v => `- ${normalizeSummaryText(v)}`).join('\n')
-          return `### ${label}\n${listText}`
-        }
-
-        let formattedValue = normalizeSummaryText(value)
-        if (typeof value === 'number' && ['pricePerception', 'purchaseIntent', 'demandSignal', 'messageClarity'].includes(key)) {
-           if (value <= 1.5) formattedValue = "Bajo (1/3)"
-           else if (value <= 2.5) formattedValue = "Medio (2/3)"
-           else formattedValue = "Alto (3/3)"
-        }
+  // Estilos de píldoras dinámicas
+  return (
+    <article className="project-panel" style={{ padding: '32px', marginBottom: '32px', background: 'var(--surface-raised)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+      <h2 style={{ fontSize: '1.25rem', marginBottom: '24px', letterSpacing: '-0.02em' }}>{copy.results.analyticalSummary}</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
         
-        return `### ${label}\n${formattedValue}`
-      })
-      .join('\n\n')
-  }
+        {/* Progress Bar de Intención de Compra */}
+        <div style={{ paddingRight: '20px', borderRight: '1px solid var(--border)' }}>
+           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', fontWeight: 600 }}>{copy.results.purchaseIntentDistribution}</p>
+           
+           <div style={{ display: 'flex', height: '28px', width: '100%', borderRadius: '14px', overflow: 'hidden', marginBottom: '16px', background: 'var(--surface-sunken)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
+              <div style={{ width: `${(intents.high / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #059669 0%, #10B981 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`${copy.results.high}: ${intents.high}`} />
+              <div style={{ width: `${(intents.medium / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #D97706 0%, #F59E0B 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`${copy.results.medium}: ${intents.medium}`} />
+              <div style={{ width: `${(intents.low / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #E11D48 0%, #EF4444 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`${copy.results.low}: ${intents.low}`} />
+              <div style={{ width: `${(intents.neutral / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #4B5563 0%, #6B7280 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`${copy.results.neutral}: ${intents.neutral}`} />
+           </div>
 
-  return String(summary || '')
-}
+           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, padding: '0 4px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                 <span style={{ color: '#10B981', fontSize: '1.25rem' }}>{Math.round(intents.high/totalIntents*100)}%</span>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>{copy.results.high}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                 <span style={{ color: '#F59E0B', fontSize: '1.25rem' }}>{Math.round(intents.medium/totalIntents*100)}%</span>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>{copy.results.medium}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                 <span style={{ color: '#EF4444', fontSize: '1.25rem' }}>{Math.round(intents.low/totalIntents*100)}%</span>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>{copy.results.low}</span>
+              </div>
+           </div>
+        </div>
 
-function buildSummarySections(summaryText: string): SimulationResultsSection[] {
-  const lines = summaryText.split('\n')
-  const sections: SimulationResultsSection[] = []
-  let currentTitle: string | null = null
-  let currentContent: string[] = []
+        {/* Métrica Global de Edad Promedio */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 600 }}>{copy.results.avgAgeAudience}</p>
+           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+             <span style={{ fontSize: '4.5rem', fontWeight: '800', color: 'var(--primary)', lineHeight: '1', letterSpacing: '-0.03em' }}>
+               {avgAge}
+             </span>
+             <span style={{ fontSize: '1.25rem', color: 'var(--text-muted)', fontWeight: 600 }}>{copy.results.yearsOld}</span>
+           </div>
+        </div>
 
-  const flushSection = () => {
-    const content = currentContent.join('\n').trim()
-    if (!currentTitle && !content) return
-    sections.push({
-      title: currentTitle,
-      content,
-    })
-    currentTitle = null
-    currentContent = []
-  }
-
-  lines.forEach((line) => {
-    const trimmedLine = line.trim()
-    if (trimmedLine.startsWith('### ') || trimmedLine.startsWith('## ') || trimmedLine.startsWith('# ')) {
-      flushSection()
-      currentTitle = trimmedLine.replace(/^#{1,3}\s+/, '')
-      return
-    }
-
-    currentContent.push(line)
-  })
-
-  flushSection()
-
-  if (sections.length === 0 && summaryText.trim()) {
-    return [{ title: null, content: summaryText.trim() }]
-  }
-
-  return sections
+      </div>
+    </article>
+  )
 }
 
 function SimulationResults({ projectId, simulationId, copy, onNavigate }: SimulationResultsProps) {
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [resultsData, setResultsData] = useState<SimulationResultsData | null>(null)
   const [personas, setPersonas] = useState<any[]>([])
+  const [hasEmptySummary, setHasEmptySummary] = useState(false)
 
-  useEffect(() => {
-    let isMounted = true
+  const loadResults = async () => {
+    try {
+      const [projectData, simulationsData, modelsData] = await Promise.all([
+        getProject(projectId),
+        getProjectSimulations(projectId),
+        getProjectModels(projectId)
+      ])
 
-    const loadResults = async () => {
-      try {
-        const [projectData, simulationsData, modelsData] = await Promise.all([
-          getProject(projectId),
-          getProjectSimulations(projectId),
-          getProjectModels(projectId)
-        ])
+      const simulation = simulationsData.find((item: any) => item.id === simulationId)
 
-        if (!isMounted) return
-        const simulation = simulationsData.find((item: any) => item.id === simulationId)
-
-        if (!projectData || !simulation) {
-          setResultsData(null)
-          setPersonas([])
-          return
-        }
-
-        setPersonas(
-          (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
-        )
-        const summaryText = normalizeSummaryText(simulation.summary || copy.results.noInsights)
-        setResultsData({
-          productDescription: projectData.context?.product_description || '',
-          summaryText,
-          sections: buildSummarySections(summaryText),
-        })
-
-      } catch (error) {
-        console.error(error)
-        if (!isMounted) return
+      if (!projectData || !simulation) {
         setResultsData(null)
         setPersonas([])
-      } finally {
-        if (isMounted) setIsLoading(false)
+        return
       }
-    }
 
+      setPersonas(
+        (modelsData as TargetModelApi[]).map((model) => mapTargetModelToUserPersona(model, copy)),
+      )
+      
+      const summaryIsEmpty = !simulation.summary || (Array.isArray(simulation.summary) && simulation.summary.length === 0)
+      setHasEmptySummary(summaryIsEmpty)
+      
+      if (summaryIsEmpty) {
+        setResultsData({
+          productDescription: projectData.context?.description || '',
+        })
+      } else {
+        if (Array.isArray(simulation.summary)) {
+          setResultsData({
+            productDescription: projectData.context?.description || '',
+            agentFeedbacks: simulation.summary
+          })
+        } else {
+          setResultsData({
+            productDescription: projectData.context?.description || '',
+            rawText: typeof simulation.summary === 'string' ? simulation.summary : JSON.stringify(simulation.summary, null, 2)
+          })
+        }
+      }
+
+    } catch (error) {
+      console.error(error)
+      setResultsData(null)
+      setPersonas([])
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
     void loadResults()
+  }, [projectId, simulationId, copy]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    return () => {
-      isMounted = false
-    }
-  }, [projectId, simulationId, copy])
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    await loadResults()
+  }
 
   if (isLoading) {
     return (
@@ -262,29 +315,57 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
         <article className="project-panel summary-panel">
           <div className="project-new-simulation-heading">
             <p className="panel-kicker">{copy.results.insightsTitle}</p>
-            <h2>{copy.results.title}</h2>
+            <h2>{copy.results.individualBreakdown}</h2>
           </div>
           <div className="summary-overview">
             <p className="panel-kicker">{copy.results.productDescription}</p>
             <h3>{resultsData.productDescription || '—'}</h3>
           </div>
-          <div className="summary-sections">
-            {resultsData.sections.map((section: any, index: number) => (
-              <article key={`${section.title || 'section'}-${index}`} className="summary-section-card">
-                {section.title ? <h3 className="summary-section-title">{section.title}</h3> : null}
+          
+          {hasEmptySummary ? (
+            <div className="summary-sections">
+              <article className="summary-section-card">
                 <div className="summary-content">
-                  {parseMarkdownToElements(section.content)}
+                  <p className="summary-p">{copy.results.analyzingData}</p>
+                  <button
+                    type="button"
+                    className="primary-cta"
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                  >
+                    {isRefreshing ? copy.results.refreshing : copy.results.refreshProgress}
+                  </button>
                 </div>
               </article>
-            ))}
-          </div>
+            </div>
+          ) : resultsData.agentFeedbacks ? (
+            <div className="summary-sections" style={{ marginTop: '40px' }}>
+              <AnalyticsDashboard personas={personas} agentFeedbacks={resultsData.agentFeedbacks} copy={copy} />
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {resultsData.agentFeedbacks.map((agent: AgentFeedback, index: number) => (
+                  <AgentCard key={`${agent.User}-${index}`} agent={agent} copy={copy} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="summary-sections">
+              <article className="summary-section-card">
+                <div className="summary-content">
+                  <pre style={{ whiteSpace: 'pre-wrap', background: 'var(--surface-sunken)', padding: '16px', borderRadius: '12px' }}>
+                    {resultsData.rawText}
+                  </pre>
+                </div>
+              </article>
+            </div>
+          )}
         </article>
 
         {personas.length > 0 && (
           <article className="project-panel personas-panel">
             <div className="project-new-simulation-heading">
               <p className="panel-kicker">{copy.results.personasTitle}</p>
-              <h2>Participants Context</h2>
+              <h2>{copy.results.participantContext}</h2>
             </div>
             <div className="user-persona-list">
               {personas.map((persona) => (
