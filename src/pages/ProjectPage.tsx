@@ -34,6 +34,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
   
   const [form, setForm] = useState({
     description: '',
+    category: '',
     targetAge: '',
     targetGender: 'any',
     suggestedPrice: ''
@@ -57,6 +58,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
         setProject(projectData)
         setForm({
           description: projectData.context?.description || '',
+          category: projectData.context?.category || '',
           targetAge: projectData.context?.target_age || '',
           targetGender: projectData.context?.target_gender || 'any',
           suggestedPrice: projectData.context?.suggested_price || '',
@@ -117,6 +119,7 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
         name: project.name,
         context: {
           description: form.description,
+          category: form.category,
           target_age: form.targetAge,
           target_gender: form.targetGender,
           suggested_price: form.suggestedPrice
@@ -224,12 +227,24 @@ function ProjectPage({ projectId, onNavigate, copy, locale }: ProjectPageProps) 
             
             <label className="field">
               <span>{copy.project.productDescriptionShortLabel}</span>
-              <input
-                type="text"
+              <textarea
                 value={form.description}
                 disabled={isPersonasLocked}
                 onChange={(e) => setForm((c) => ({ ...c, description: e.target.value }))}
-                placeholder={copy.project.productDescriptionShortPlaceholder}
+                placeholder={copy.project.productDescriptionLongPlaceholder}
+                maxLength={500}
+                rows={4}
+              />
+            </label>
+
+            <label className="field">
+              <span>{copy.project.categoryLabel}</span>
+              <input
+                type="text"
+                value={form.category}
+                disabled={isPersonasLocked}
+                onChange={(e) => setForm((c) => ({ ...c, category: e.target.value }))}
+                placeholder={copy.project.categoryPlaceholder}
               />
             </label>
 

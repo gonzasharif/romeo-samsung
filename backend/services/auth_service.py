@@ -57,7 +57,28 @@ def get_authenticated_user(credentials: HTTPAuthorizationCredentials = Depends(s
         if not user_response or not user_response.user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         
-        return get_user_or_404(user_response.user.id)
+        try:
+            return get_user_or_404(user_response.user.id)
+        except HTTPException as e:
+            if e.status_code == status.HTTP_404_NOT_FOUND:
+                from utils.common import now_utc
+                import json
+                
+                meta = user_response.user.user_metadata or {}
+                user_data = {
+                    "id": user_response.user.id,
+                    "full_name": meta.get("full_name", "Usuario"),
+                    "email": user_response.user.email,
+                    "company": json.dumps({"name": meta.get("company_name", "Empresa")}),
+                    "created_at": now_utc().isoformat(),
+                    "updated_at": now_utc().isoformat()
+                }
+                try:
+                    supabase.table("users").insert(user_data).execute()
+                    return get_user_or_404(user_response.user.id)
+                except Exception as insert_error:
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Failed to auto-create user profile: {str(insert_error)}")
+            raise
     except HTTPException:
         raise
     except Exception as e:

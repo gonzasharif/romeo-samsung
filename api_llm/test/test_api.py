@@ -38,11 +38,18 @@ def test_get_model():
         sys.exit(1)
 
 def test_create_people_model():
-    """Prueba el endpoint /create_people_model/ pidiendo un producto al usuario."""
+    """Prueba el endpoint /create_people_model/ leyendo el producto de proyect-idea.txt."""
     print("\n[+] 2. Ejecutando perfilado efímero (POST /create_people_model/)...")
     
-    # Pedir input de consola al usuario
-    producto_prueba = input("      >> Ingrese la descripción del producto que desea evaluar: ")
+    # Leer el producto desde el archivo proyect-idea.txt
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "proyect-idea.txt")
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            producto_prueba = f.read().strip()
+    except Exception as e:
+        print(f"      [Falló] No se pudo leer el archivo '{file_path}': {e}")
+        sys.exit(1)
+        
     print(f"      Enviando request con producto: '{producto_prueba}' al servidor...")
     
     try:
@@ -211,7 +218,7 @@ def main():
     # Paso 1: Obtener la lista de modelos
     modelos = test_get_model()
     
-    # Paso 2: Crear perfiles usando consola y estructurarlos
+    # Paso 2: Crear perfiles leyendo el archivo y estructurarlos
     producto, perfiles = test_create_people_model()
     
     # Paso 3: Iniciar el proxy LLM en memoria enviando la petición

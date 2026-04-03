@@ -36,6 +36,7 @@ class AgentProfile(BaseModel):
 
 class ProjectContext(BaseModel):
     description: str | None = None
+    category: str | None = None
     target_age: str | None = None
     target_gender: str | None = None
     suggested_price: str | None = None

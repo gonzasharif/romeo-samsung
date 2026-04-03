@@ -194,6 +194,9 @@ export const messages = {
       userPersonaTertiaryName: 'Evaluador escéptico',
       userPersonaTertiarySummary:
         'Necesita señales fuertes de confianza y argumentos concretos para avanzar.',
+      productDescriptionLongPlaceholder: 'Hasta 500 caracteres',
+      categoryLabel: 'Categoría',
+      categoryPlaceholder: 'Ej. Alimentación, Salud, Finanzas',
       productDescriptionShortLabel: 'Descripción del producto',
       productDescriptionShortPlaceholder: 'Hasta 50 caracteres',
       ageRangeLabel: 'Rango etario',
@@ -462,6 +465,9 @@ export const messages = {
       userPersonaTertiaryName: 'Skeptical evaluator',
       userPersonaTertiarySummary:
         'Needs strong trust signals and concrete arguments before moving forward.',
+      productDescriptionLongPlaceholder: 'Up to 500 characters',
+      categoryLabel: 'Category',
+      categoryPlaceholder: 'Ex. Food, Health, Finance',
       productDescriptionShortLabel: 'Product description',
       productDescriptionShortPlaceholder: 'Up to 50 characters',
       ageRangeLabel: 'Client\'s age range',
