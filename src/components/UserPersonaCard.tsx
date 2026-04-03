@@ -31,7 +31,6 @@ function UserPersonaCard({ persona, copy, onEdit, onDelete, hideActions = false 
       <div className="user-persona-meta">
         <span>{copy.project.userPersonaAge(persona.ageRange)}</span>
         <span>{copy.project.userPersonaRegion(persona.region)}</span>
-        <span>{copy.project.userPersonaPrice(persona.price)}</span>
         <span>{copy.project.userPersonaSex(persona.sex)}</span>
       </div>
 
