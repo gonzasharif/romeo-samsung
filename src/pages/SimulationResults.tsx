@@ -106,6 +106,83 @@ function AgentCard({ agent }: { agent: AgentFeedback }) {
   )
 }
 
+function AnalyticsDashboard({ personas, agentFeedbacks }: { personas: any[], agentFeedbacks: AgentFeedback[] }) {
+  // Calcular edad promedio iterando los perfiles de agentes
+  let totalAge = 0
+  let countAge = 0
+  personas.forEach(p => {
+    const a = parseInt(String(p.age).replace(/\D/g, ''), 10)
+    if (!isNaN(a)) {
+      totalAge += a
+      countAge++
+    }
+  })
+  const avgAge = countAge > 0 ? Math.round(totalAge / countAge) : '?'
+
+  // Contar frecuencias de intención
+  const intents = { high: 0, medium: 0, low: 0, neutral: 0 }
+  const totalIntents = agentFeedbacks.length || 1
+  
+  agentFeedbacks.forEach(agent => {
+    const isObj = typeof agent.Feedback === 'object' && agent.Feedback !== null
+    const feedback = isObj ? agent.Feedback as AgentFeedbackDetails : null
+    const rawIntent = (feedback?.purchase_interest || '').toLowerCase()
+    
+    if (rawIntent.includes('high') || rawIntent.includes('alta') || rawIntent.includes('muy alta')) intents.high++
+    else if (rawIntent.includes('low') || rawIntent.includes('baja') || rawIntent.includes('muy baja')) intents.low++
+    else if (rawIntent.includes('medium') || rawIntent.includes('media')) intents.medium++
+    else intents.neutral++
+  })
+
+  // Estilos de píldoras dinámicas
+  return (
+    <article className="project-panel" style={{ padding: '32px', marginBottom: '32px', background: 'var(--surface-raised)', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+      <h2 style={{ fontSize: '1.25rem', marginBottom: '24px', letterSpacing: '-0.02em' }}>Resumen Analítico</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
+        
+        {/* Progress Bar de Intención de Compra */}
+        <div style={{ paddingRight: '20px', borderRight: '1px solid var(--border)' }}>
+           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px', fontWeight: 600 }}>Distribución de Intención de Compra</p>
+           
+           <div style={{ display: 'flex', height: '28px', width: '100%', borderRadius: '14px', overflow: 'hidden', marginBottom: '16px', background: 'var(--surface-sunken)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
+              <div style={{ width: `${(intents.high / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #059669 0%, #10B981 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`Alta: ${intents.high}`} />
+              <div style={{ width: `${(intents.medium / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #D97706 0%, #F59E0B 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`Media: ${intents.medium}`} />
+              <div style={{ width: `${(intents.low / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #E11D48 0%, #EF4444 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`Baja: ${intents.low}`} />
+              <div style={{ width: `${(intents.neutral / totalIntents) * 100}%`, background: 'linear-gradient(90deg, #4B5563 0%, #6B7280 100%)', transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} title={`Neutral: ${intents.neutral}`} />
+           </div>
+
+           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, padding: '0 4px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                 <span style={{ color: '#10B981', fontSize: '1.25rem' }}>{Math.round(intents.high/totalIntents*100)}%</span>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>Alta</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                 <span style={{ color: '#F59E0B', fontSize: '1.25rem' }}>{Math.round(intents.medium/totalIntents*100)}%</span>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>Media</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                 <span style={{ color: '#EF4444', fontSize: '1.25rem' }}>{Math.round(intents.low/totalIntents*100)}%</span>
+                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>Baja</span>
+              </div>
+           </div>
+        </div>
+
+        {/* Métrica Global de Edad Promedio */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 600 }}>Edad Promedio de Audiencia Testeada</p>
+           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+             <span style={{ fontSize: '4.5rem', fontWeight: '800', color: 'var(--primary)', lineHeight: '1', letterSpacing: '-0.03em' }}>
+               {avgAge}
+             </span>
+             <span style={{ fontSize: '1.25rem', color: 'var(--text-muted)', fontWeight: 600 }}>años</span>
+           </div>
+        </div>
+
+      </div>
+    </article>
+  )
+}
+
 function SimulationResults({ projectId, simulationId, copy, onNavigate }: SimulationResultsProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -263,9 +340,13 @@ function SimulationResults({ projectId, simulationId, copy, onNavigate }: Simula
             </div>
           ) : resultsData.agentFeedbacks ? (
             <div className="summary-sections" style={{ marginTop: '40px' }}>
-              {resultsData.agentFeedbacks.map((agent: AgentFeedback, index: number) => (
-                <AgentCard key={`${agent.User}-${index}`} agent={agent} />
-              ))}
+              <AnalyticsDashboard personas={personas} agentFeedbacks={resultsData.agentFeedbacks} />
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {resultsData.agentFeedbacks.map((agent: AgentFeedback, index: number) => (
+                  <AgentCard key={`${agent.User}-${index}`} agent={agent} />
+                ))}
+              </div>
             </div>
           ) : (
             <div className="summary-sections">
