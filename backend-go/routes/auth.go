@@ -2,47 +2,47 @@ package routes
 
 import (
 	"fmt"
-	"net/http"
 
 	"backend-go/schemas"
 	"backend-go/services"
+	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
 	Provider AuthProvider
 }
 
-func RegisterAuthRoutes(mux *http.ServeMux, provider AuthProvider) {
+func RegisterAuthRoutes(router gin.IRouter, provider AuthProvider) {
 	handler := &AuthHandler{Provider: provider}
-	mux.HandleFunc("POST /login", handler.Login)
-	mux.HandleFunc("POST /logout", handler.Logout)
+	router.POST("/login", handler.Login)
+	router.POST("/logout", handler.Logout)
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Login(c *gin.Context) {
 	if h.Provider == nil {
-		writeError(w, fmt.Errorf("auth provider is not configured"))
+		writeError(c, fmt.Errorf("auth provider is not configured"))
 		return
 	}
 
 	var payload schemas.LoginRequest
-	if err := readJSON(r, &payload); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Invalid request body"})
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Invalid request body"})
 		return
 	}
 
 	response, err := h.Provider.SignInWithPassword(payload.Email, payload.Password)
 	if err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusUnauthorized, Detail: err.Error()})
+		writeError(c, &services.HTTPError{StatusCode: 401, Detail: err.Error()})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, response)
+	writeJSON(c, 200, response)
 }
 
-func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Logout(c *gin.Context) {
 	if h.Provider != nil {
-		_ = h.Provider.SignOut(bearerToken(r))
+		_ = h.Provider.SignOut(bearerToken(c))
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
+	writeJSON(c, 200, gin.H{"message": "Logged out successfully"})
 }

@@ -5,12 +5,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	"backend-go/models"
 	"backend-go/schemas"
 	"backend-go/services"
+	"github.com/gin-gonic/gin"
 )
 
 type ProjectHandler struct {
@@ -24,7 +24,7 @@ type ProjectHandler struct {
 }
 
 func RegisterProjectRoutes(
-	mux *http.ServeMux,
+	router gin.IRouter,
 	auth AuthService,
 	projects ProjectRepository,
 	targetModels TargetModelRepository,
@@ -41,31 +41,31 @@ func RegisterProjectRoutes(
 		NewID:        newRouteID,
 	}
 
-	mux.HandleFunc("GET /projects", handler.ListProjects)
-	mux.HandleFunc("POST /projects", handler.CreateProject)
-	mux.HandleFunc("GET /projects/{project_id}", handler.GetProject)
-	mux.HandleFunc("PUT /projects/{project_id}", handler.UpdateProject)
-	mux.HandleFunc("DELETE /projects/{project_id}", handler.DeleteProject)
-	mux.HandleFunc("GET /projects/{project_id}/models", handler.ListProjectModels)
-	mux.HandleFunc("POST /projects/{project_id}/generate_agents", handler.GenerateProjectAgents)
-	mux.HandleFunc("DELETE /projects/{project_id}/models/{model_id}", handler.DeleteProjectModel)
-	mux.HandleFunc("GET /projects/{project_id}/simulations", handler.ListSimulations)
-	mux.HandleFunc("POST /projects/{project_id}/simulations", handler.CreateSimulation)
+	router.GET("/projects", handler.ListProjects)
+	router.POST("/projects", handler.CreateProject)
+	router.GET("/projects/:project_id", handler.GetProject)
+	router.PUT("/projects/:project_id", handler.UpdateProject)
+	router.DELETE("/projects/:project_id", handler.DeleteProject)
+	router.GET("/projects/:project_id/models", handler.ListProjectModels)
+	router.POST("/projects/:project_id/generate_agents", handler.GenerateProjectAgents)
+	router.DELETE("/projects/:project_id/models/:model_id", handler.DeleteProjectModel)
+	router.GET("/projects/:project_id/simulations", handler.ListSimulations)
+	router.POST("/projects/:project_id/simulations", handler.CreateSimulation)
 }
 
-func (h *ProjectHandler) ListProjects(w http.ResponseWriter, r *http.Request) {
-	user, ok := h.authenticatedUser(w, r)
+func (h *ProjectHandler) ListProjects(c *gin.Context) {
+	user, ok := h.authenticatedUser(c)
 	if !ok {
 		return
 	}
 	if h.Projects == nil {
-		writeError(w, fmt.Errorf("project repository is not configured"))
+		writeError(c, fmt.Errorf("project repository is not configured"))
 		return
 	}
 
 	rows, err := h.Projects.ListProjectsByOwner(user.ID)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
@@ -73,28 +73,28 @@ func (h *ProjectHandler) ListProjects(w http.ResponseWriter, r *http.Request) {
 	for _, row := range rows {
 		project, err := decodeProject(row)
 		if err != nil {
-			writeError(w, err)
+			writeError(c, err)
 			return
 		}
 		projects = append(projects, project)
 	}
 
-	writeJSON(w, http.StatusOK, projects)
+	writeJSON(c, 200, projects)
 }
 
-func (h *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
-	user, ok := h.authenticatedUser(w, r)
+func (h *ProjectHandler) CreateProject(c *gin.Context) {
+	user, ok := h.authenticatedUser(c)
 	if !ok {
 		return
 	}
 	if h.Projects == nil {
-		writeError(w, fmt.Errorf("project repository is not configured"))
+		writeError(c, fmt.Errorf("project repository is not configured"))
 		return
 	}
 
 	var payload schemas.ProjectCreate
-	if err := readJSON(r, &payload); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Invalid request body"})
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Invalid request body"})
 		return
 	}
 
@@ -108,47 +108,45 @@ func (h *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 		"updated_at": timestamp,
 	})
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
 	project, err := decodeProject(row)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, project)
+	writeJSON(c, 201, project)
 }
 
-func (h *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
-	project, ok := h.ownedProject(w, r)
+func (h *ProjectHandler) GetProject(c *gin.Context) {
+	project, ok := h.ownedProject(c)
 	if !ok {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, project)
+	writeJSON(c, 200, project)
 }
 
-func (h *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
-	project, ok := h.ownedProject(w, r)
+func (h *ProjectHandler) UpdateProject(c *gin.Context) {
+	project, ok := h.ownedProject(c)
 	if !ok {
 		return
 	}
 	if h.Projects == nil {
-		writeError(w, fmt.Errorf("project repository is not configured"))
+		writeError(c, fmt.Errorf("project repository is not configured"))
 		return
 	}
 
 	var payload schemas.ProjectUpdate
-	if err := readJSON(r, &payload); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Invalid request body"})
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Invalid request body"})
 		return
 	}
 
-	updateData := map[string]any{
-		"updated_at": h.now().Format(time.RFC3339),
-	}
+	updateData := map[string]any{"updated_at": h.now().Format(time.RFC3339)}
 	if payload.Name != nil {
 		updateData["name"] = *payload.Name
 	}
@@ -157,59 +155,59 @@ func (h *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Projects.UpdateProject(project.ID, updateData); err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
 	updatedProject, err := h.Auth.GetProjectOr404(project.ID)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, updatedProject)
+	writeJSON(c, 200, updatedProject)
 }
 
-func (h *ProjectHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
-	project, ok := h.ownedProject(w, r)
+func (h *ProjectHandler) DeleteProject(c *gin.Context) {
+	project, ok := h.ownedProject(c)
 	if !ok {
 		return
 	}
 	if h.Projects == nil {
-		writeError(w, fmt.Errorf("project repository is not configured"))
+		writeError(c, fmt.Errorf("project repository is not configured"))
 		return
 	}
 
 	if err := h.Projects.DeleteProject(project.ID); err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusNoContent, nil)
+	writeJSON(c, 204, nil)
 }
 
-func (h *ProjectHandler) ListProjectModels(w http.ResponseWriter, r *http.Request) {
-	project, ok := h.ownedProject(w, r)
+func (h *ProjectHandler) ListProjectModels(c *gin.Context) {
+	project, ok := h.ownedProject(c)
 	if !ok {
 		return
 	}
 
 	modelsList, err := h.listProjectModels(project.ID)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, modelsList)
+	writeJSON(c, 200, modelsList)
 }
 
-func (h *ProjectHandler) GenerateProjectAgents(w http.ResponseWriter, r *http.Request) {
-	project, ok := h.ownedProject(w, r)
+func (h *ProjectHandler) GenerateProjectAgents(c *gin.Context) {
+	project, ok := h.ownedProject(c)
 	if !ok {
 		return
 	}
 	if h.LLM == nil {
-		writeError(w, fmt.Errorf("api llm service is not configured"))
+		writeError(c, fmt.Errorf("api llm service is not configured"))
 		return
 	}
 
@@ -227,7 +225,7 @@ func (h *ProjectHandler) GenerateProjectAgents(w http.ResponseWriter, r *http.Re
 		"project_id": project.ID,
 	})
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
@@ -240,51 +238,51 @@ func (h *ProjectHandler) GenerateProjectAgents(w http.ResponseWriter, r *http.Re
 			}
 			model, err := decodeTargetModel(row)
 			if err != nil {
-				writeError(w, err)
+				writeError(c, err)
 				return
 			}
 			savedModels = append(savedModels, model)
 		}
 	}
 
-	writeJSON(w, http.StatusCreated, savedModels)
+	writeJSON(c, 201, savedModels)
 }
 
-func (h *ProjectHandler) DeleteProjectModel(w http.ResponseWriter, r *http.Request) {
-	project, ok := h.ownedProject(w, r)
+func (h *ProjectHandler) DeleteProjectModel(c *gin.Context) {
+	project, ok := h.ownedProject(c)
 	if !ok {
 		return
 	}
 	if h.TargetModels == nil || h.Projects == nil {
-		writeError(w, fmt.Errorf("project dependencies are not configured"))
+		writeError(c, fmt.Errorf("project dependencies are not configured"))
 		return
 	}
 
-	if err := h.TargetModels.DeleteTargetModel(project.ID, r.PathValue("model_id")); err != nil {
-		writeError(w, err)
+	if err := h.TargetModels.DeleteTargetModel(project.ID, c.Param("model_id")); err != nil {
+		writeError(c, err)
 		return
 	}
 	if err := h.Projects.UpdateProject(project.ID, map[string]any{"updated_at": h.now().Format(time.RFC3339)}); err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusNoContent, nil)
+	writeJSON(c, 204, nil)
 }
 
-func (h *ProjectHandler) ListSimulations(w http.ResponseWriter, r *http.Request) {
-	project, ok := h.ownedProject(w, r)
+func (h *ProjectHandler) ListSimulations(c *gin.Context) {
+	project, ok := h.ownedProject(c)
 	if !ok {
 		return
 	}
 	if h.Simulations == nil {
-		writeError(w, fmt.Errorf("simulation repository is not configured"))
+		writeError(c, fmt.Errorf("simulation repository is not configured"))
 		return
 	}
 
 	rows, err := h.Simulations.ListSimulationRunsByProject(project.ID)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
@@ -292,34 +290,34 @@ func (h *ProjectHandler) ListSimulations(w http.ResponseWriter, r *http.Request)
 	for _, row := range rows {
 		run, err := decodeSimulationRun(normalizeSimulationRow(row))
 		if err != nil {
-			writeError(w, err)
+			writeError(c, err)
 			return
 		}
 		simulations = append(simulations, run)
 	}
 
-	writeJSON(w, http.StatusOK, simulations)
+	writeJSON(c, 200, simulations)
 }
 
-func (h *ProjectHandler) CreateSimulation(w http.ResponseWriter, r *http.Request) {
-	project, ok := h.ownedProject(w, r)
+func (h *ProjectHandler) CreateSimulation(c *gin.Context) {
+	project, ok := h.ownedProject(c)
 	if !ok {
 		return
 	}
 	if h.Simulations == nil || h.Projects == nil || h.LLM == nil {
-		writeError(w, fmt.Errorf("simulation dependencies are not configured"))
+		writeError(c, fmt.Errorf("simulation dependencies are not configured"))
 		return
 	}
 
 	var payload schemas.SimulationCreate
-	if err := readJSON(r, &payload); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Invalid request body"})
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Invalid request body"})
 		return
 	}
 
 	agents, err := h.listProjectModels(project.ID)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
@@ -340,7 +338,7 @@ func (h *ProjectHandler) CreateSimulation(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := h.Simulations.InsertSimulationRun(runData); err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
@@ -358,22 +356,20 @@ func (h *ProjectHandler) CreateSimulation(w http.ResponseWriter, r *http.Request
 		"agent_context": agentContext,
 	})
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
 	modelID, _ := modelData["model_id"].(string)
 	if modelID != "" {
-		defer func() {
-			_, _ = h.LLM.StopModel(modelID)
-		}()
+		defer func() { _, _ = h.LLM.StopModel(modelID) }()
 	}
 
 	agentResponses := make([]map[string]any, 0, len(agents))
 	for _, agent := range agents {
 		promptJSON, err := json.Marshal(agent)
 		if err != nil {
-			writeError(w, err)
+			writeError(c, err)
 			return
 		}
 
@@ -382,7 +378,7 @@ func (h *ProjectHandler) CreateSimulation(w http.ResponseWriter, r *http.Request
 			"prompt":   string(promptJSON),
 		})
 		if err != nil {
-			writeError(w, err)
+			writeError(c, err)
 			return
 		}
 
@@ -401,52 +397,52 @@ func (h *ProjectHandler) CreateSimulation(w http.ResponseWriter, r *http.Request
 		"summary":      agentResponses,
 		"completed_at": h.now().Format(time.RFC3339),
 	}); err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 	if err := h.Projects.UpdateProject(project.ID, map[string]any{"updated_at": timestamp.Format(time.RFC3339)}); err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
 	runData["summary"] = agentResponses
 	run, err := decodeSimulationRun(normalizeSimulationRow(runData))
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusAccepted, run)
+	writeJSON(c, 202, run)
 }
 
-func (h *ProjectHandler) authenticatedUser(w http.ResponseWriter, r *http.Request) (models.User, bool) {
+func (h *ProjectHandler) authenticatedUser(c *gin.Context) (models.User, bool) {
 	if h.Auth == nil {
-		writeError(w, fmt.Errorf("auth service is not configured"))
+		writeError(c, fmt.Errorf("auth service is not configured"))
 		return models.User{}, false
 	}
 
-	user, err := h.Auth.GetAuthenticatedUser(bearerToken(r))
+	user, err := h.Auth.GetAuthenticatedUser(bearerToken(c))
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return models.User{}, false
 	}
 
 	return user, true
 }
 
-func (h *ProjectHandler) ownedProject(w http.ResponseWriter, r *http.Request) (models.Project, bool) {
-	user, ok := h.authenticatedUser(w, r)
+func (h *ProjectHandler) ownedProject(c *gin.Context) (models.Project, bool) {
+	user, ok := h.authenticatedUser(c)
 	if !ok {
 		return models.Project{}, false
 	}
 
-	project, err := h.Auth.GetProjectOr404(r.PathValue("project_id"))
+	project, err := h.Auth.GetProjectOr404(c.Param("project_id"))
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return models.Project{}, false
 	}
 	if err := services.AssertProjectOwner(project, user); err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return models.Project{}, false
 	}
 

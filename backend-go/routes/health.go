@@ -1,9 +1,9 @@
 package routes
 
-import "net/http"
+import "github.com/gin-gonic/gin"
 
-func RegisterHealthRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+func RegisterHealthRoutes(router gin.IRouter) {
+	router.GET("/health", func(c *gin.Context) {
+		writeJSON(c, 200, gin.H{"status": "ok"})
 	})
 }

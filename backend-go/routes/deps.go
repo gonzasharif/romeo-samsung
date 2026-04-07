@@ -1,9 +1,8 @@
 package routes
 
 import (
-	"net/http"
-
 	"backend-go/models"
+	"github.com/gin-gonic/gin"
 )
 
 type AuthService interface {
@@ -64,10 +63,10 @@ type Dependencies struct {
 	LLM          APILLMService
 }
 
-func Register(mux *http.ServeMux, deps Dependencies) {
-	RegisterHealthRoutes(mux)
-	RegisterAuthRoutes(mux, deps.AuthProvider)
-	RegisterUserRoutes(mux, deps.Auth, deps.AuthProvider, deps.Users)
-	RegisterAPILLMRoutes(mux, deps.LLM)
-	RegisterProjectRoutes(mux, deps.Auth, deps.Projects, deps.TargetModels, deps.Simulations, deps.LLM)
+func Register(router gin.IRouter, deps Dependencies) {
+	RegisterHealthRoutes(router)
+	RegisterAuthRoutes(router, deps.AuthProvider)
+	RegisterUserRoutes(router, deps.Auth, deps.AuthProvider, deps.Users)
+	RegisterAPILLMRoutes(router, deps.LLM)
+	RegisterProjectRoutes(router, deps.Auth, deps.Projects, deps.TargetModels, deps.Simulations, deps.LLM)
 }

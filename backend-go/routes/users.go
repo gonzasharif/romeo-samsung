@@ -3,12 +3,11 @@ package routes
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
-	"backend-go/models"
 	"backend-go/schemas"
 	"backend-go/services"
+	"github.com/gin-gonic/gin"
 )
 
 type UserHandler struct {
@@ -18,7 +17,7 @@ type UserHandler struct {
 	Now          func() time.Time
 }
 
-func RegisterUserRoutes(mux *http.ServeMux, auth AuthService, authProvider AuthProvider, users UserRepository) {
+func RegisterUserRoutes(router gin.IRouter, auth AuthService, authProvider AuthProvider, users UserRepository) {
 	handler := &UserHandler{
 		Auth:         auth,
 		AuthProvider: authProvider,
@@ -26,21 +25,21 @@ func RegisterUserRoutes(mux *http.ServeMux, auth AuthService, authProvider AuthP
 		Now:          time.Now().UTC,
 	}
 
-	mux.HandleFunc("POST /users", handler.CreateUser)
-	mux.HandleFunc("GET /users/{user_id}", handler.GetUser)
-	mux.HandleFunc("PUT /users/{user_id}", handler.UpdateUser)
-	mux.HandleFunc("PATCH /users/{user_id}", handler.UpdateUser)
+	router.POST("/users", handler.CreateUser)
+	router.GET("/users/:user_id", handler.GetUser)
+	router.PUT("/users/:user_id", handler.UpdateUser)
+	router.PATCH("/users/:user_id", handler.UpdateUser)
 }
 
-func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateUser(c *gin.Context) {
 	if h.Auth == nil || h.AuthProvider == nil || h.Users == nil {
-		writeError(w, fmt.Errorf("user dependencies are not configured"))
+		writeError(c, fmt.Errorf("user dependencies are not configured"))
 		return
 	}
 
 	var payload schemas.UserCreate
-	if err := readJSON(r, &payload); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Invalid request body"})
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Invalid request body"})
 		return
 	}
 
@@ -49,17 +48,17 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		"company_name": payload.Company.Name,
 	})
 	if err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: err.Error()})
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: err.Error()})
 		return
 	}
 	if user == nil || user.ID == "" {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Error creating user in Auth"})
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Error creating user in Auth"})
 		return
 	}
 
 	companyJSON, err := json.Marshal(payload.Company)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
@@ -72,50 +71,50 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		"created_at": timestamp,
 		"updated_at": timestamp,
 	}); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: err.Error()})
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: err.Error()})
 		return
 	}
 
 	createdUser, err := h.Auth.GetUserOr404(user.ID)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, createdUser)
+	writeJSON(c, 201, createdUser)
 }
 
-func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetUser(c *gin.Context) {
 	if h.Auth == nil {
-		writeError(w, fmt.Errorf("auth service is not configured"))
+		writeError(c, fmt.Errorf("auth service is not configured"))
 		return
 	}
 
-	user, err := h.Auth.GetUserOr404(r.PathValue("user_id"))
+	user, err := h.Auth.GetUserOr404(c.Param("user_id"))
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, user)
+	writeJSON(c, 200, user)
 }
 
-func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) UpdateUser(c *gin.Context) {
 	if h.Auth == nil || h.Users == nil {
-		writeError(w, fmt.Errorf("user dependencies are not configured"))
+		writeError(c, fmt.Errorf("user dependencies are not configured"))
 		return
 	}
 
-	userID := r.PathValue("user_id")
+	userID := c.Param("user_id")
 	current, err := h.Auth.GetUserOr404(userID)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
 	var payload schemas.UserUpdate
-	if err := readJSON(r, &payload); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Invalid request body"})
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Invalid request body"})
 		return
 	}
 
@@ -129,41 +128,30 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if payload.Company != nil {
 		companyJSON, err := json.Marshal(payload.Company)
 		if err != nil {
-			writeError(w, err)
+			writeError(c, err)
 			return
 		}
 		updateData["company"] = string(companyJSON)
 	}
 
 	if len(updateData) == 0 {
-		writeJSON(w, http.StatusOK, current)
+		writeJSON(c, 200, current)
 		return
 	}
 
 	updateData["updated_at"] = h.now().Format(time.RFC3339)
 	if err := h.Users.UpdateUser(userID, updateData); err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
 	updatedUser, err := h.Auth.GetUserOr404(userID)
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, updatedUser)
-}
-
-func userToMap(user models.User) map[string]any {
-	return map[string]any{
-		"id":         user.ID,
-		"full_name":  user.FullName,
-		"email":      user.Email,
-		"company":    user.Company,
-		"created_at": user.CreatedAt,
-		"updated_at": user.UpdatedAt,
-	}
+	writeJSON(c, 200, updatedUser)
 }
 
 func (h *UserHandler) now() time.Time {

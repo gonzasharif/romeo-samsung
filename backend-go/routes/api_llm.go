@@ -2,49 +2,50 @@ package routes
 
 import (
 	"fmt"
-	"net/http"
 
 	"backend-go/schemas"
 	"backend-go/services"
+	"github.com/gin-gonic/gin"
 )
 
 type APILLMHandler struct {
 	Service APILLMService
 }
 
-func RegisterAPILLMRoutes(mux *http.ServeMux, service APILLMService) {
+func RegisterAPILLMRoutes(router gin.IRouter, service APILLMService) {
 	handler := &APILLMHandler{Service: service}
-	mux.HandleFunc("GET /api-llm/models", handler.GetModels)
-	mux.HandleFunc("POST /api-llm/start", handler.StartModel)
-	mux.HandleFunc("POST /api-llm/{model_id}/ask", handler.AskModel)
-	mux.HandleFunc("POST /api-llm/{model_id}/stop", handler.StopModel)
-	mux.HandleFunc("POST /api-llm/{project_id}/create_people_model", handler.CreatePeopleModel)
+	group := router.Group("/api-llm")
+	group.GET("/models", handler.GetModels)
+	group.POST("/start", handler.StartModel)
+	group.POST("/:model_id/ask", handler.AskModel)
+	group.POST("/:model_id/stop", handler.StopModel)
+	group.POST("/:project_id/create_people_model", handler.CreatePeopleModel)
 }
 
-func (h *APILLMHandler) GetModels(w http.ResponseWriter, r *http.Request) {
+func (h *APILLMHandler) GetModels(c *gin.Context) {
 	if h.Service == nil {
-		writeError(w, fmt.Errorf("api llm service is not configured"))
+		writeError(c, fmt.Errorf("api llm service is not configured"))
 		return
 	}
 
 	data, err := h.Service.GetModels()
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, data)
+	writeJSON(c, 200, data)
 }
 
-func (h *APILLMHandler) StartModel(w http.ResponseWriter, r *http.Request) {
+func (h *APILLMHandler) StartModel(c *gin.Context) {
 	if h.Service == nil {
-		writeError(w, fmt.Errorf("api llm service is not configured"))
+		writeError(c, fmt.Errorf("api llm service is not configured"))
 		return
 	}
 
 	var req schemas.StartModelRequest
-	if err := readJSON(r, &req); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Invalid request body"})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Invalid request body"})
 		return
 	}
 
@@ -55,72 +56,72 @@ func (h *APILLMHandler) StartModel(w http.ResponseWriter, r *http.Request) {
 		"n_ctx":         req.NCtx,
 	})
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, data)
+	writeJSON(c, 200, data)
 }
 
-func (h *APILLMHandler) AskModel(w http.ResponseWriter, r *http.Request) {
+func (h *APILLMHandler) AskModel(c *gin.Context) {
 	if h.Service == nil {
-		writeError(w, fmt.Errorf("api llm service is not configured"))
+		writeError(c, fmt.Errorf("api llm service is not configured"))
 		return
 	}
 
 	var req schemas.AskModelRequest
-	if err := readJSON(r, &req); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Invalid request body"})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Invalid request body"})
 		return
 	}
 
 	data, err := h.Service.AskModel(map[string]any{
-		"model_id": r.PathValue("model_id"),
+		"model_id": c.Param("model_id"),
 		"prompt":   req.Prompt,
 	})
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, data)
+	writeJSON(c, 200, data)
 }
 
-func (h *APILLMHandler) StopModel(w http.ResponseWriter, r *http.Request) {
+func (h *APILLMHandler) StopModel(c *gin.Context) {
 	if h.Service == nil {
-		writeError(w, fmt.Errorf("api llm service is not configured"))
+		writeError(c, fmt.Errorf("api llm service is not configured"))
 		return
 	}
 
-	data, err := h.Service.StopModel(r.PathValue("model_id"))
+	data, err := h.Service.StopModel(c.Param("model_id"))
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, data)
+	writeJSON(c, 200, data)
 }
 
-func (h *APILLMHandler) CreatePeopleModel(w http.ResponseWriter, r *http.Request) {
+func (h *APILLMHandler) CreatePeopleModel(c *gin.Context) {
 	if h.Service == nil {
-		writeError(w, fmt.Errorf("api llm service is not configured"))
+		writeError(c, fmt.Errorf("api llm service is not configured"))
 		return
 	}
 
 	var req schemas.CreatePeopleModelRequest
-	if err := readJSON(r, &req); err != nil {
-		writeError(w, &services.HTTPError{StatusCode: http.StatusBadRequest, Detail: "Invalid request body"})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		writeError(c, &services.HTTPError{StatusCode: 400, Detail: "Invalid request body"})
 		return
 	}
 
 	data, err := h.Service.CreatePeopleModel(map[string]any{
-		"project_id": r.PathValue("project_id"),
+		"project_id": c.Param("project_id"),
 		"prompt":     req.Prompt,
 	})
 	if err != nil {
-		writeError(w, err)
+		writeError(c, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, data)
+	writeJSON(c, 200, data)
 }
